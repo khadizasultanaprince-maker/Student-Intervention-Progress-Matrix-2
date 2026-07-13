@@ -8,6 +8,13 @@ export type WeaknessLevel = 'Mild' | 'Moderate' | 'Severe';
 export type LearningStyle = 'Visual' | 'Auditory' | 'Kinesthetic';
 export type ProgressSignal = 'Red' | 'Yellow' | 'Green';
 
+export interface ShortTermGoal {
+  title: string;
+  targetDate: string; // ISO Date String
+  status: 'In Progress' | 'Achieved' | 'Needs Improvement';
+  updatedAt?: string;
+}
+
 export interface StudentRecord {
   id: string; // Unique record ID for React keys & deletion
   studentName: string;
@@ -26,6 +33,7 @@ export interface StudentRecord {
   strategyUsed: string;
   teacherRemarks: string;
   createdAt: string; // Timestamp
+  shortTermGoal?: ShortTermGoal; // 2-week target goal
 }
 
 export const WeaknessCategoryLabels: Record<WeaknessCategory, string> = {

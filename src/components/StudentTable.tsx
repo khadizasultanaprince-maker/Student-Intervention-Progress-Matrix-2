@@ -22,6 +22,7 @@ interface StudentTableRowProps {
   onSelectMessage: (record: any) => void;
   getLevelBadgeClass: (level: string) => string;
   getStyleBadgeClass: (style: string) => string;
+  onUpdateGoalStatus?: (id: string, status: 'In Progress' | 'Achieved' | 'Needs Improvement') => void;
 }
 
 function StudentTableRow({
@@ -30,7 +31,8 @@ function StudentTableRow({
   onDelete,
   onSelectMessage,
   getLevelBadgeClass,
-  getStyleBadgeClass
+  getStyleBadgeClass,
+  onUpdateGoalStatus
 }: StudentTableRowProps) {
   const [pulseColor, setPulseColor] = useState<'Green' | 'Yellow' | 'Red' | null>(null);
   const prevSignalRef = useRef(record.progressSignal);
@@ -167,6 +169,108 @@ function StudentTableRow({
               <p className="text-slate-400 italic">“{record.teacherRemarks}”</p>
             </div>
           )}
+
+          {record.shortTermGoal && (() => {
+            const goal = record.shortTermGoal;
+            const target = new Date(goal.targetDate);
+            const today = new Date();
+            target.setHours(0,0,0,0);
+            today.setHours(0,0,0,0);
+            const diffTime = target.getTime() - today.getTime();
+            const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const isExpired = daysRemaining < 0;
+
+            const toBengaliNumber = (num: number) => {
+              const bnNums = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+              return Math.abs(num).toString().split('').map(digit => {
+                const parsed = parseInt(digit);
+                return isNaN(parsed) ? digit : bnNums[parsed];
+              }).join('');
+            };
+
+            return (
+              <div className="pt-2 border-t border-white/10 mt-2 space-y-1.5">
+                <span className="font-semibold text-rose-400 block text-[11px]">🎯 ২ সপ্তাহের লক্ষ্য (Short-term Goal):</span>
+                <div className="bg-slate-950/60 p-2 rounded border border-white/5 space-y-1 text-[11px]">
+                  <p className="text-white font-medium">{goal.title}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-400">
+                    <span>শেষ তারিখ: {new Date(goal.targetDate).toLocaleDateString('bn-BD', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                    <span>
+                      {isExpired ? (
+                        <span className="text-rose-400 font-bold bg-rose-500/10 px-1 py-0.2 rounded animate-pulse">⏰ সময় অতিক্রান্ত!</span>
+                      ) : (
+                        <span className="text-slate-300">⏳ আর {toBengaliNumber(daysRemaining)} দিন বাকি</span>
+                      )}
+                    </span>
+                  </div>
+                  
+                  {/* Status indicator and Quick Update Selector */}
+                  <div className="pt-1.5 border-t border-white/5 mt-1 space-y-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[10px] text-slate-400">অবস্থা:</span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        goal.status === 'Achieved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                        goal.status === 'Needs Improvement' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' :
+                        'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                      }`}>
+                        {goal.status === 'Achieved' ? '🏆 অর্জিত' :
+                         goal.status === 'Needs Improvement' ? '⚠️ উন্নয়ন প্রয়োজন' : '🎯 চলমান'}
+                      </span>
+                    </div>
+
+                    {/* Show explicit status update option automatically if expired */}
+                    {isExpired && (
+                      <div className="space-y-1 mt-1 bg-amber-500/5 p-1.5 rounded border border-amber-500/20">
+                        <p className="text-[10px] text-amber-300 font-bold flex items-center gap-1">
+                          <span>⚡</span>
+                          <span>লক্ষ্য অর্জিত হয়েছে কি? প্রগতি আপডেট করুন:</span>
+                        </p>
+                        <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => onUpdateGoalStatus?.(record.id, 'Achieved')}
+                            className="flex-1 text-[9px] font-bold bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white px-1.5 py-1 rounded transition cursor-pointer"
+                          >
+                            🏆 অর্জিত
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onUpdateGoalStatus?.(record.id, 'Needs Improvement')}
+                            className="flex-1 text-[9px] font-bold bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-1.5 py-1 rounded transition cursor-pointer"
+                          >
+                            ⚠️ উন্নয়ন প্রয়োজন
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onUpdateGoalStatus?.(record.id, 'In Progress')}
+                            className="text-[9px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-1 rounded transition cursor-pointer"
+                          >
+                            🎯 চলমান
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Manual always-available select dropdown for status update */}
+                    {!isExpired && (
+                      <div className="flex items-center justify-between gap-1.5 pt-0.5">
+                        <span className="text-[9px] text-slate-500">আপডেট করুন:</span>
+                        <select
+                          value={goal.status}
+                          onChange={(e) => onUpdateGoalStatus?.(record.id, e.target.value as any)}
+                          className="text-[9px] px-1 py-0.5 rounded bg-slate-900 border border-white/10 text-slate-300 font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                        >
+                          <option value="In Progress">🎯 চলমান</option>
+                          <option value="Achieved">🏆 অর্জিত</option>
+                          <option value="Needs Improvement">⚠️ উন্নয়ন প্রয়োজন</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </td>
 
@@ -208,9 +312,10 @@ interface StudentTableProps {
   records: StudentRecord[];
   onDelete: (id: string) => void;
   onEdit: (record: StudentRecord) => void;
+  onUpdateGoalStatus?: (id: string, status: 'In Progress' | 'Achieved' | 'Needs Improvement') => void;
 }
 
-export default function StudentTable({ records, onDelete, onEdit }: StudentTableProps) {
+export default function StudentTable({ records, onDelete, onEdit, onUpdateGoalStatus }: StudentTableProps) {
   const [selectedMessageRecord, setSelectedMessageRecord] = useState<StudentRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
@@ -469,6 +574,7 @@ export default function StudentTable({ records, onDelete, onEdit }: StudentTable
                   onSelectMessage={setSelectedMessageRecord}
                   getLevelBadgeClass={getLevelBadgeClass}
                   getStyleBadgeClass={getStyleBadgeClass}
+                  onUpdateGoalStatus={onUpdateGoalStatus}
                 />
               ))}
             </tbody>

@@ -126,6 +126,24 @@ export default function App() {
     }
   };
 
+  // Update Goal Status
+  const handleUpdateGoalStatus = (id: string, status: 'In Progress' | 'Achieved' | 'Needs Improvement') => {
+    const updated = records.map(rec => {
+      if (rec.id === id) {
+        return {
+          ...rec,
+          shortTermGoal: rec.shortTermGoal ? {
+            ...rec.shortTermGoal,
+            status,
+            updatedAt: new Date().toISOString()
+          } : undefined
+        } as StudentRecord;
+      }
+      return rec;
+    });
+    saveRecords(updated);
+  };
+
   // Trigger Edit Mode
   const handleEditTrigger = (record: StudentRecord) => {
     setEditingRecord(record);
@@ -355,6 +373,7 @@ export default function App() {
                 records={records}
                 onDelete={handleDeleteRecord}
                 onEdit={handleEditTrigger}
+                onUpdateGoalStatus={handleUpdateGoalStatus}
               />
 
               {/* Student Progress Visualization Dashboard */}
@@ -377,6 +396,7 @@ export default function App() {
               <ParentView 
                 records={records} 
                 onBackToTeacher={() => setViewMode('teacher')} 
+                onUpdateGoalStatus={handleUpdateGoalStatus}
               />
             </div>
           )}

@@ -27,13 +27,27 @@ import {
 interface ParentViewProps {
   records: StudentRecord[];
   onBackToTeacher: () => void;
+  onUpdateGoalStatus?: (id: string, status: 'In Progress' | 'Achieved' | 'Needs Improvement') => void;
 }
 
-export default function ParentView({ records, onBackToTeacher }: ParentViewProps) {
+export default function ParentView({ records, onBackToTeacher, onUpdateGoalStatus }: ParentViewProps) {
   const [studentIdInput, setStudentIdInput] = useState('');
   const [loggedInStudent, setLoggedInStudent] = useState<StudentRecord | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showPrintCard, setShowPrintCard] = useState(false);
+
+  const handleUpdateParentGoalStatus = (status: 'In Progress' | 'Achieved' | 'Needs Improvement') => {
+    if (!loggedInStudent) return;
+    onUpdateGoalStatus?.(loggedInStudent.id, status);
+    setLoggedInStudent(prev => prev ? {
+      ...prev,
+      shortTermGoal: prev.shortTermGoal ? {
+        ...prev.shortTermGoal,
+        status,
+        updatedAt: new Date().toISOString()
+      } : undefined
+    } : null);
+  };
 
   // Available students in system for easy simulation
   const availableStudents = useMemo(() => {
@@ -368,6 +382,25 @@ export default function ParentView({ records, onBackToTeacher }: ParentViewProps
                 </div>
               </div>
 
+              {/* 2-Week Goal on Print Card */}
+              {loggedInStudent.shortTermGoal && (
+                <div className="border border-rose-200 p-4 rounded-xl bg-rose-50/10 space-y-1 text-xs">
+                  <h5 className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                    <span>🎯</span>
+                    <span>২ সপ্তাহের নির্ধারিত প্রগতি লক্ষ্য (Short-Term Goal)</span>
+                  </h5>
+                  <p className="text-slate-800 font-bold">লক্ষ্য: {loggedInStudent.shortTermGoal.title}</p>
+                  <p className="text-slate-600 font-medium">
+                    পূরণের শেষ সময়: {new Date(loggedInStudent.shortTermGoal.targetDate).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })} 
+                    {' | '} 
+                    অবস্থা: <span className="font-extrabold text-indigo-700">
+                      {loggedInStudent.shortTermGoal.status === 'Achieved' ? '🏆 অর্জিত' :
+                       loggedInStudent.shortTermGoal.status === 'Needs Improvement' ? '⚠️ উন্নয়ন প্রয়োজন' : '🎯 চলমান'}
+                    </span>
+                  </p>
+                </div>
+              )}
+
               {/* Signal and psychological indicators */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-slate-200/80 p-4 rounded-xl text-xs">
                 <div className="text-center space-y-1">
@@ -569,6 +602,100 @@ export default function ParentView({ records, onBackToTeacher }: ParentViewProps
               {/* Right Column: Teacher's Advice, Interventions & Behavior - 4 Cols */}
               <div className="lg:col-span-4 space-y-6 text-left">
                 
+                {/* 2-Week Goal Box */}
+                {loggedInStudent.shortTermGoal && (
+                  <div className="bg-gradient-to-br from-rose-50 to-amber-50 rounded-2xl border border-rose-100 p-6 shadow-md space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-rose-200">
+                      <TrendingUp className="w-4 h-4 text-rose-500" />
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">🎯 ২ সপ্তাহের লক্ষ্য ও প্রগতি</h4>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="bg-white/80 p-3 rounded-xl border border-rose-100 space-y-1">
+                        <p className="text-[10px] font-bold text-rose-500">চলমান লক্ষ্য (Active Goal):</p>
+                        <p className="text-xs font-bold text-slate-800 leading-relaxed">{loggedInStudent.shortTermGoal.title}</p>
+                      </div>
+
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-medium">পূরণের শেষ সময়:</span>
+                        <span className="font-bold text-slate-700">
+                          {new Date(loggedInStudent.shortTermGoal.targetDate).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </span>
+                      </div>
+
+                      {(() => {
+                        const target = new Date(loggedInStudent.shortTermGoal!.targetDate);
+                        const today = new Date();
+                        target.setHours(0,0,0,0);
+                        today.setHours(0,0,0,0);
+                        const diffTime = target.getTime() - today.getTime();
+                        const daysRem = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        const isExp = daysRem < 0;
+                        
+                        const bnNums = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+                        const toBnNum = (n: number) => Math.abs(n).toString().split('').map(d => bnNums[parseInt(d)] || d).join('');
+                        
+                        return (
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-slate-500 font-medium">বাকি সময়:</span>
+                              {isExp ? (
+                                <span className="text-rose-600 font-black bg-rose-100 px-2 py-0.5 rounded animate-pulse">⏰ সময় অতিক্রান্ত!</span>
+                              ) : (
+                                <span className="text-slate-700 font-bold bg-amber-100/80 px-2 py-0.5 rounded">⏳ আর {toBnNum(daysRem)} দিন বাকি</span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200">
+                              <span className="text-slate-500 font-medium">বর্তমান অবস্থা:</span>
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                loggedInStudent.shortTermGoal?.status === 'Achieved' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                loggedInStudent.shortTermGoal?.status === 'Needs Improvement' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                                'bg-blue-100 text-blue-800 border border-blue-200'
+                              }`}>
+                                {loggedInStudent.shortTermGoal?.status === 'Achieved' ? '🏆 অর্জিত (Achieved)' :
+                                 loggedInStudent.shortTermGoal?.status === 'Needs Improvement' ? '⚠️ উন্নয়ন প্রয়োজন' : '🎯 চলমান (In Progress)'}
+                              </span>
+                            </div>
+
+                            {/* Self status update options */}
+                            <div className="pt-2.5 mt-2 border-t border-rose-200/60 bg-white/50 p-3 rounded-xl space-y-2">
+                              <p className="text-[10px] text-slate-600 font-extrabold leading-normal">
+                                {isExp 
+                                  ? "⏰ লক্ষ্য পূরণের সময় পেরিয়ে গেছে! অভিভাবক বা শিক্ষার্থী হিসেবে লক্ষ্যটির বর্তমান অবস্থা আপডেট করুন:" 
+                                  : "প্রগতি পরিবর্তনের সাথে সাথে লক্ষ্যটির বর্তমান অবস্থা আপডেট করুন:"}
+                              </p>
+                              <div className="flex gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateParentGoalStatus('Achieved')}
+                                  className="flex-1 text-[9px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1.5 rounded-lg transition active:scale-95 cursor-pointer shadow-sm"
+                                >
+                                  🏆 অর্জিত
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateParentGoalStatus('Needs Improvement')}
+                                  className="flex-1 text-[9px] font-bold bg-rose-600 hover:bg-rose-500 text-white px-2 py-1.5 rounded-lg transition active:scale-95 cursor-pointer shadow-sm"
+                                >
+                                  ⚠️ প্রয়োজন
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateParentGoalStatus('In Progress')}
+                                  className="text-[9px] font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1.5 rounded-lg transition active:scale-95 cursor-pointer shadow-sm"
+                                >
+                                  🎯 চলমান
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
                 {/* 3. Teacher's Advice & Remarks Box */}
                 <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-2xl border border-indigo-950 p-6 shadow-xl space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b border-indigo-800/60">

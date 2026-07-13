@@ -15,13 +15,19 @@ import {
   LearningStyleLabels,
   ProgressSignalLabels
 } from '../types';
-import { User, ShieldAlert, Brain, FileSpreadsheet, Send, RefreshCw, X } from 'lucide-react';
+import { User, ShieldAlert, Brain, FileSpreadsheet, Send, RefreshCw, X, Target } from 'lucide-react';
 
 interface StudentFormProps {
   onSubmit: (record: Omit<StudentRecord, 'id' | 'createdAt'> & { id?: string }) => void;
   editingRecord: StudentRecord | null;
   onCancelEdit: () => void;
 }
+
+const getTwoWeeksFromNow = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 14);
+  return d.toISOString().split('T')[0];
+};
 
 const initialFormState = {
   studentName: '',
@@ -39,6 +45,10 @@ const initialFormState = {
   lastWeekProgressSignal: 'Yellow' as ProgressSignal,
   strategyUsed: '',
   teacherRemarks: '',
+  // Goal Fields
+  goalTitle: '',
+  goalTargetDate: getTwoWeeksFromNow(),
+  goalStatus: 'In Progress' as 'In Progress' | 'Achieved' | 'Needs Improvement',
 };
 
 export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: StudentFormProps) {
@@ -63,10 +73,16 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
         lastWeekProgressSignal: editingRecord.lastWeekProgressSignal || editingRecord.progressSignal || 'Yellow',
         strategyUsed: editingRecord.strategyUsed,
         teacherRemarks: editingRecord.teacherRemarks,
+        goalTitle: editingRecord.shortTermGoal?.title || '',
+        goalTargetDate: editingRecord.shortTermGoal?.targetDate ? editingRecord.shortTermGoal.targetDate.split('T')[0] : getTwoWeeksFromNow(),
+        goalStatus: editingRecord.shortTermGoal?.status || 'In Progress',
       });
       setErrors({});
     } else {
-      setFormData(initialFormState);
+      setFormData({
+        ...initialFormState,
+        goalTargetDate: getTwoWeeksFromNow()
+      });
     }
   }, [editingRecord]);
 
@@ -104,9 +120,35 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
     e.preventDefault();
     if (!validate()) return;
 
-    onSubmit(editingRecord ? { ...formData, id: editingRecord.id } : formData);
+    const recordData = {
+      studentName: formData.studentName,
+      studentId: formData.studentId,
+      studentClass: formData.studentClass,
+      weaknessCategory: formData.weaknessCategory,
+      weaknessLevel: formData.weaknessLevel,
+      rootCause: formData.rootCause,
+      learningStyle: formData.learningStyle,
+      behavior: formData.behavior,
+      hiddenTalent: formData.hiddenTalent,
+      baselineStatus: formData.baselineStatus,
+      currentStatus: formData.currentStatus,
+      progressSignal: formData.progressSignal,
+      lastWeekProgressSignal: formData.lastWeekProgressSignal,
+      strategyUsed: formData.strategyUsed,
+      teacherRemarks: formData.teacherRemarks,
+      shortTermGoal: formData.goalTitle.trim() ? {
+        title: formData.goalTitle.trim(),
+        targetDate: new Date(formData.goalTargetDate).toISOString(),
+        status: formData.goalStatus,
+      } : undefined
+    };
+
+    onSubmit(editingRecord ? { ...recordData, id: editingRecord.id } : recordData);
     if (!editingRecord) {
-      setFormData(initialFormState);
+      setFormData({
+        ...initialFormState,
+        goalTargetDate: getTwoWeeksFromNow()
+      });
     }
   };
 
@@ -443,6 +485,81 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
               ></textarea>
             </div>
           </div>
+        </div>
+
+        {/* SECTION 5: Two-Week Short Term Goal */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-white/10 text-slate-200 font-semibold text-sm">
+            <Target className="w-4 h-4 text-rose-400" />
+            <span>৫. ২ সপ্তাহের লক্ষ্য ও প্রগতি ট্র্যাকার (Short-Term Target Goal)</span>
+          </div>
+          <p className="text-xs text-slate-400">
+            শিক্ষার্থী বা শিক্ষকের যৌথ উদ্যোগে আগামী ২ সপ্তাহের জন্য একটি নির্দিষ্ট, পরিমাপযোগ্য লক্ষ্য (Goal) নির্ধারণ করুন।
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <label htmlFor="goalTitle" className="block text-xs font-semibold text-slate-300 mb-1">
+                নির্দিষ্ট লক্ষ্য / Goal <span className="text-slate-500">(যেমন: "প্রতিদিন ২টি বাংলা অনুচ্ছেদ বানান ছাড়া রিডিং পড়া")</span>
+              </label>
+              <input
+                type="text"
+                id="goalTitle"
+                name="goalTitle"
+                value={formData.goalTitle}
+                onChange={handleChange}
+                placeholder="যেমন: প্রতিদিন ১ পৃষ্ঠা হাতের লেখা এবং ৪টি ইংরেজি শব্দের অর্থ মুখস্থ করা"
+                className="w-full text-sm px-3.5 py-2.5 rounded-lg border border-white/15 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition bg-slate-900/50 text-white"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="goalTargetDate" className="block text-xs font-semibold text-slate-300 mb-1">
+                লক্ষ্য পূরণের শেষ সময় (Target Date)
+              </label>
+              <input
+                type="date"
+                id="goalTargetDate"
+                name="goalTargetDate"
+                value={formData.goalTargetDate}
+                onChange={handleChange}
+                className="w-full text-sm px-3.5 py-2.5 rounded-lg border border-white/15 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition bg-slate-900/50 text-white"
+              />
+            </div>
+          </div>
+
+          {formData.goalTitle.trim() && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                লক্ষ্যের বর্তমান অবস্থা (Goal Status)
+              </label>
+              <div className="grid grid-cols-3 gap-1.5 h-[42px] items-center max-w-md">
+                {[
+                  { value: 'In Progress', label: 'চলমান (In Progress)', emoji: '🎯', color: 'blue' },
+                  { value: 'Achieved', label: 'অর্জিত (Achieved)', emoji: '🏆', color: 'emerald' },
+                  { value: 'Needs Improvement', label: 'উন্নতি প্রয়োজন', emoji: '⚠️', color: 'rose' }
+                ].map((item) => {
+                  const isSelected = formData.goalStatus === item.value;
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setFormData(p => ({ ...p, goalStatus: item.value as any }))}
+                      className={`flex items-center justify-center gap-1 h-full rounded-lg text-[10px] border font-bold transition cursor-pointer ${
+                        isSelected 
+                          ? item.value === 'Achieved' ? 'bg-emerald-600 border-emerald-500 text-white ring-2 ring-emerald-500/40'
+                            : item.value === 'Needs Improvement' ? 'bg-rose-600 border-rose-500 text-white ring-2 ring-rose-500/40'
+                            : 'bg-blue-600 border-blue-500 text-white ring-2 ring-blue-500/40'
+                          : 'bg-slate-900/40 border-white/10 hover:bg-white/5 text-slate-300'
+                      }`}
+                    >
+                      <span>{item.emoji}</span>
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Form Action Buttons */}
