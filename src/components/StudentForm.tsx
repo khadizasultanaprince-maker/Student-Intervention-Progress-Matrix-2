@@ -15,7 +15,8 @@ import {
   LearningStyleLabels,
   ProgressSignalLabels
 } from '../types';
-import { User, ShieldAlert, Brain, FileSpreadsheet, Send, RefreshCw, X, Target, Sparkles, Phone, UserCheck, BookOpen, PenTool, HelpCircle, Activity, Calendar } from 'lucide-react';
+import { User, ShieldAlert, Brain, FileSpreadsheet, Send, RefreshCw, X, Target, Sparkles, Phone, UserCheck, BookOpen, PenTool, HelpCircle, Activity, Calendar, Image, Users, Upload } from 'lucide-react';
+import { PRELOADED_STUDENTS, getPlaceholderAvatar } from '../studentDatabase';
 
 interface StudentFormProps {
   onSubmit: (record: Omit<StudentRecord, 'id' | 'createdAt'> & { id?: string }) => void;
@@ -66,12 +67,84 @@ const initialFormState = {
   week3: 'None' as 'None' | 'Red' | 'Yellow' | 'Green',
   week4: 'None' as 'None' | 'Red' | 'Yellow' | 'Green',
   aiSuggestion: '',
+
+  // New Lookup & Photo fields
+  studentRoll: '',
+  studentPhoto: '',
+  fatherName: '',
+  motherName: '',
+  fatherPhoto: '',
+  motherPhoto: '',
 };
 
 export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: StudentFormProps) {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
+  const [searchClass, setSearchClass] = useState('');
+  const [searchRoll, setSearchRoll] = useState('');
+  const [lookupMessage, setLookupMessage] = useState<{ type: 'success' | 'error' | null; text: string }>({ type: null, text: '' });
+
+  const toBanglaNum = (str: string) => {
+    const banglaMap: Record<string, string> = { '0':'০', '1':'১', '2':'২', '3':'৩', '4':'৪', '5':'৫', '6':'৬', '7':'৭', '8':'৮', '9':'৯' };
+    return str.replace(/[0-9]/g, c => banglaMap[c] || c);
+  };
+  
+  const toEnglishNum = (str: string) => {
+    const engMap: Record<string, string> = { '০':'0', '১':'1', '২':'2', '৩':'3', '৪':'4', '৫':'5', '৬':'6', '৭':'7', '৮':'8', '৯':'9' };
+    return str.replace(/[০-৯]/g, c => engMap[c] || c);
+  };
+
+  useEffect(() => {
+    if (!searchClass || !searchRoll) {
+      setLookupMessage({ type: null, text: '' });
+      return;
+    }
+    const classStudents = PRELOADED_STUDENTS[searchClass];
+    if (classStudents) {
+      const bRoll = toBanglaNum(searchRoll.trim());
+      const eRoll = toEnglishNum(searchRoll.trim());
+      const match = classStudents.find(s => s.roll === bRoll || s.roll === eRoll || s.roll === searchRoll.trim());
+      if (match) {
+        setFormData(prev => ({
+          ...prev,
+          studentName: match.name,
+          studentId: match.roll,
+          studentClass: `${searchClass} শ্রেণী (শ্রেণী - ${searchClass})`,
+          studentRoll: match.roll,
+          studentPhoto: getPlaceholderAvatar(match.gender, match.roll),
+        }));
+        setLookupMessage({
+          type: 'success',
+          text: `✓ শিক্ষার্থী পাওয়া গেছে! নাম: ${match.name}, শ্রেণী: ${searchClass}, রোল: ${match.roll}`
+        });
+      } else {
+        setLookupMessage({
+          type: 'error',
+          text: `✗ এই রোলের কোনো শিক্ষার্থী পাওয়া যায়নি।`
+        });
+      }
+    } else {
+      setLookupMessage({
+        type: 'error',
+        text: `✗ এই শ্রেণীর কোনো শিক্ষার্থী রেকর্ড পাওয়া যায়নি।`
+      });
+    }
+  }, [searchClass, searchRoll]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, fieldName: 'studentPhoto' | 'fatherPhoto' | 'motherPhoto') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: reader.result as string
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleGenerateAISuggestion = async () => {
     setIsGeneratingAI(true);
@@ -162,6 +235,14 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
         week3: editingRecord.weeklyProgress?.week3 || 'None',
         week4: editingRecord.weeklyProgress?.week4 || 'None',
         aiSuggestion: editingRecord.aiSuggestion || '',
+
+        // New fields
+        studentRoll: editingRecord.studentRoll || '',
+        studentPhoto: editingRecord.studentPhoto || '',
+        fatherName: editingRecord.fatherName || '',
+        motherName: editingRecord.motherName || '',
+        fatherPhoto: editingRecord.fatherPhoto || '',
+        motherPhoto: editingRecord.motherPhoto || '',
       });
       setErrors({});
     } else {
@@ -251,6 +332,14 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
         week4: formData.week4 as any,
       },
       aiSuggestion: formData.aiSuggestion.trim() || undefined,
+
+      // New fields
+      studentRoll: formData.studentRoll,
+      studentPhoto: formData.studentPhoto,
+      fatherName: formData.fatherName,
+      motherName: formData.motherName,
+      fatherPhoto: formData.fatherPhoto,
+      motherPhoto: formData.motherPhoto,
     };
 
     onSubmit(editingRecord ? { ...recordData, id: editingRecord.id } : recordData);
@@ -295,8 +384,55 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
         <div className="space-y-4">
           <div className="flex items-center gap-2 pb-1 border-b border-white/10 text-slate-200 font-semibold text-sm">
             <User className="w-4 h-4 text-blue-400" />
-            <span>১. শিক্ষার্থীর সাধারণ তথ্য (Student Identification)</span>
+            <span>১. স্মার্ট শিক্ষার্থী অনুসন্ধান ও সাধারণ তথ্য (Smart Lookup & General Info)</span>
           </div>
+
+          {/* Quick PDF Data Search Lookup Card */}
+          <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 space-y-3">
+            <h3 className="text-xs font-bold text-indigo-300 flex items-center gap-1.5 uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-indigo-400" />
+              পিডিএফ ডাটাবেজ থেকে দ্রুত শিক্ষার্থী লোড করুন (Quick Search from PDF)
+            </h3>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              শ্রেণি নির্বাচন করে শিক্ষার্থীর রোল নম্বর দিলেই তার নামসহ ডাটা ও ছবি স্বয়ংক্রিয়ভাবে নিচে বসে যাবে।
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">শ্রেণি নির্বাচন করুন</label>
+                <select
+                  value={searchClass}
+                  onChange={(e) => setSearchClass(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-white/10 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-950 text-white"
+                >
+                  <option value="">-- শ্রেণি নির্বাচন করুন --</option>
+                  {Object.keys(PRELOADED_STUDENTS).map(cls => (
+                    <option key={cls} value={cls}>{cls} শ্রেণি</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-300 mb-1">রোল নম্বর দিন (ইংরেজী বা বাংলায়)</label>
+                <input
+                  type="text"
+                  placeholder="যেমন: ১ অথবা 1"
+                  value={searchRoll}
+                  onChange={(e) => setSearchRoll(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-white/10 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-950 text-white"
+                />
+              </div>
+            </div>
+
+            {lookupMessage.text && (
+              <div className={`text-xs px-3 py-1.5 rounded-lg border font-medium ${
+                lookupMessage.type === 'success' 
+                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+                  : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+              }`}>
+                {lookupMessage.text}
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="studentName" className="block text-xs font-semibold text-slate-300 mb-1">
@@ -344,6 +480,112 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
                 className={`w-full text-sm px-3.5 py-2.5 rounded-lg border focus:ring-2 focus:outline-none transition ${errors.studentClass ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-slate-900/60 text-white' : 'border-white/15 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-900/50 text-white'}`}
               />
               {errors.studentClass && <p className="text-red-400 text-xs mt-1">{errors.studentClass}</p>}
+            </div>
+          </div>
+
+          {/* Student & Parents Profiles Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            {/* Box A: Student Profile Picture */}
+            <div className="p-4 rounded-xl border border-white/5 bg-slate-900/40 flex flex-col items-center justify-between space-y-3">
+              <span className="text-xs font-bold text-slate-300 self-start flex items-center gap-1.5">
+                <Image className="w-3.5 h-3.5 text-blue-400" />
+                শিক্ষার্থীর ছবি (Student Photo)
+              </span>
+              
+              <div className="relative w-24 h-24 rounded-xl border border-white/10 overflow-hidden bg-slate-950 flex items-center justify-center">
+                {formData.studentPhoto ? (
+                  <img src={formData.studentPhoto} alt="Student" className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                ) : (
+                  <User className="w-10 h-10 text-slate-600" />
+                )}
+              </div>
+
+              <label className="w-full text-center py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 border border-white/5 transition cursor-pointer flex items-center justify-center gap-1">
+                <Upload className="w-3 h-3" />
+                ছবি আপলোড করুন
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, 'studentPhoto')}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {/* Box B: Father's Profile */}
+            <div className="p-4 rounded-xl border border-white/5 bg-slate-900/40 space-y-3">
+              <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-emerald-400" />
+                পিতার তথ্য ও ছবি (Father's Info)
+              </span>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1">পিতার নাম</label>
+                <input
+                  type="text"
+                  name="fatherName"
+                  value={formData.fatherName}
+                  onChange={handleChange}
+                  placeholder="যেমন: মোঃ আবদুর রহমান"
+                  className="w-full text-xs px-3 py-1.5 rounded-lg border border-white/10 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-slate-950 text-white"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="relative w-12 h-12 rounded-lg border border-white/10 overflow-hidden bg-slate-950 flex items-center justify-center shrink-0">
+                  {formData.fatherPhoto ? (
+                    <img src={formData.fatherPhoto} alt="Father" className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                  ) : (
+                    <User className="w-5 h-5 text-slate-600" />
+                  )}
+                </div>
+                <label className="flex-1 text-center py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[9px] font-bold text-slate-300 border border-white/5 transition cursor-pointer flex items-center justify-center gap-1">
+                  <Upload className="w-2.5 h-2.5" />
+                  পিতার ছবি আপলোড
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'fatherPhoto')}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Box C: Mother's Profile */}
+            <div className="p-4 rounded-xl border border-white/5 bg-slate-900/40 space-y-3">
+              <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-purple-400" />
+                মাতার তথ্য ও ছবি (Mother's Info)
+              </span>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-400 mb-1">মাতার নাম</label>
+                <input
+                  type="text"
+                  name="motherName"
+                  value={formData.motherName}
+                  onChange={handleChange}
+                  placeholder="যেমন: মোসাঃ ফাতেমা বেগম"
+                  className="w-full text-xs px-3 py-1.5 rounded-lg border border-white/10 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 bg-slate-950 text-white"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="relative w-12 h-12 rounded-lg border border-white/10 overflow-hidden bg-slate-950 flex items-center justify-center shrink-0">
+                  {formData.motherPhoto ? (
+                    <img src={formData.motherPhoto} alt="Mother" className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                  ) : (
+                    <User className="w-5 h-5 text-slate-600" />
+                  )}
+                </div>
+                <label className="flex-1 text-center py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-[9px] font-bold text-slate-300 border border-white/5 transition cursor-pointer flex items-center justify-center gap-1">
+                  <Upload className="w-2.5 h-2.5" />
+                  মাতার ছবি আপলোড
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'motherPhoto')}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
           </div>
         </div>

@@ -57,6 +57,14 @@ export interface StudentRecord {
   // Evaluation & Progress Tracking for next 1 month
   weeklyProgress?: WeeklyTracker;
   aiSuggestion?: string;
+
+  // New Lookup & Parent Info fields
+  studentRoll?: string;
+  studentPhoto?: string; // Base64 or image URL
+  fatherName?: string;
+  motherName?: string;
+  fatherPhoto?: string; // Base64 or image URL
+  motherPhoto?: string; // Base64 or image URL
 }
 
 export const WeaknessCategoryLabels: Record<WeaknessCategory, string> = {

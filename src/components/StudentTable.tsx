@@ -11,7 +11,7 @@ import {
   LearningStyleLabels, 
   ProgressSignalLabels 
 } from '../types';
-import { Trash2, Edit, Search, Filter, RefreshCw, Layers, Mail, Sparkles, ChevronDown, ChevronUp, BookOpen, PenTool, UserCheck, Phone, Activity, Calendar } from 'lucide-react';
+import { Trash2, Edit, Search, Filter, RefreshCw, Layers, Mail, Sparkles, ChevronDown, ChevronUp, BookOpen, PenTool, UserCheck, Phone, Activity, Calendar, User, Users, Image } from 'lucide-react';
 import ParentMessageDraftModal from './ParentMessageDraftModal';
 
 interface StudentTableRowProps {
@@ -68,21 +68,30 @@ function StudentTableRow({
       <tr key={record.id} className={rowClass}>
       {/* Column 1: Info */}
       <td className="py-3.5 px-4 align-top">
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <div className="font-bold text-white text-sm">{record.studentName}</div>
-            {pulseColor && (
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-500 text-white animate-bounce">
-                <Sparkles className="w-2.5 h-2.5" />
-                <span>আপডেট</span>
-              </span>
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/10 bg-slate-950 flex items-center justify-center shrink-0">
+            {record.studentPhoto ? (
+              <img src={record.studentPhoto} alt={record.studentName} className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+            ) : (
+              <User className="w-5 h-5 text-slate-500" />
             )}
           </div>
-          <div className="text-xs font-semibold text-slate-300 bg-slate-800 px-2 py-0.5 rounded inline-block font-mono">
-            ID: {record.studentId}
-          </div>
-          <div className="text-xs text-slate-400 block pt-0.5">
-            {record.studentClass}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="font-bold text-white text-sm">{record.studentName}</div>
+              {pulseColor && (
+                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-500 text-white animate-bounce">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  <span>আপডেট</span>
+                </span>
+              )}
+            </div>
+            <div className="text-xs font-semibold text-slate-300 bg-slate-800 px-2 py-0.5 rounded inline-block font-mono">
+              ID: {record.studentId}
+            </div>
+            <div className="text-xs text-slate-400 block pt-0.5">
+              {record.studentClass}
+            </div>
           </div>
         </div>
       </td>
@@ -321,7 +330,7 @@ function StudentTableRow({
     {isExpanded && (
       <tr className="bg-slate-950/40 border-b border-white/10 transition-all duration-300">
         <td colSpan={6} className="p-5">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs leading-relaxed text-slate-300">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 text-xs leading-relaxed text-slate-300">
             {/* Box 1: Diagnostic Weakness Grid */}
             <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5 space-y-3">
               <h4 className="text-xs font-bold text-sky-400 flex items-center gap-1.5 uppercase tracking-wider">
@@ -427,6 +436,68 @@ function StudentTableRow({
                 )}
               </div>
             </div>
+
+            {/* Box 4: Student & Parents Profile & Photos */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5 space-y-3">
+              <h4 className="text-xs font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
+                <Users className="w-4 h-4" />
+                ৪. শিক্ষার্থী ও অভিভাবক প্রোফাইল
+              </h4>
+              
+              <div className="space-y-2">
+                {/* Student */}
+                <div className="flex items-center gap-2.5 bg-slate-950/30 p-2 rounded-lg border border-white/5">
+                  <div className="w-10 h-10 rounded overflow-hidden bg-slate-900 border border-white/10 shrink-0">
+                    {record.studentPhoto ? (
+                      <img src={record.studentPhoto} alt={record.studentName} className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-500 bg-slate-950">
+                        <User className="w-4 h-4 text-slate-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-medium">শিক্ষার্থী</div>
+                    <div className="text-xs font-bold text-slate-200">{record.studentName}</div>
+                  </div>
+                </div>
+
+                {/* Father */}
+                <div className="flex items-center gap-2.5 bg-slate-950/30 p-2 rounded-lg border border-white/5">
+                  <div className="w-10 h-10 rounded overflow-hidden bg-slate-900 border border-white/10 shrink-0">
+                    {record.fatherPhoto ? (
+                      <img src={record.fatherPhoto} alt={record.fatherName} className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-500 bg-slate-950">
+                        <User className="w-4 h-4 text-slate-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-medium">পিতা</div>
+                    <div className="text-xs font-bold text-slate-200">{record.fatherName || 'পিতার নাম উল্লেখ নেই'}</div>
+                  </div>
+                </div>
+
+                {/* Mother */}
+                <div className="flex items-center gap-2.5 bg-slate-950/30 p-2 rounded-lg border border-white/5">
+                  <div className="w-10 h-10 rounded overflow-hidden bg-slate-900 border border-white/10 shrink-0">
+                    {record.motherPhoto ? (
+                      <img src={record.motherPhoto} alt={record.motherName} className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-500 bg-slate-950">
+                        <User className="w-4 h-4 text-slate-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-slate-400 font-medium">মাতা</div>
+                    <div className="text-xs font-bold text-slate-200">{record.motherName || 'মাতার নাম উল্লেখ নেই'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </td>
       </tr>

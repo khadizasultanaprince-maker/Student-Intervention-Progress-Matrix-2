@@ -279,8 +279,12 @@ export default function ParentView({ records, onBackToTeacher, onUpdateGoalStatu
               
               {/* Left Profile Details */}
               <div className="flex items-start md:items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-600/10">
-                  {loggedInStudent.studentName.charAt(0)}
+                <div className="w-14 h-14 rounded-2xl overflow-hidden border border-slate-100 bg-slate-100 flex items-center justify-center font-black text-xl shadow-lg shadow-indigo-600/10 shrink-0">
+                  {loggedInStudent.studentPhoto ? (
+                    <img src={loggedInStudent.studentPhoto} alt={loggedInStudent.studentName} className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                  ) : (
+                    <span className="text-indigo-600">{loggedInStudent.studentName.charAt(0)}</span>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -337,22 +341,69 @@ export default function ParentView({ records, onBackToTeacher, onUpdateGoalStatu
               </div>
 
               {/* Identity Matrix */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
-                <div>
-                  <p className="text-slate-400 font-bold">শিক্ষার্থীর নাম</p>
-                  <p className="font-extrabold text-slate-800 text-sm mt-0.5">{loggedInStudent.studentName}</p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+                  <div>
+                    <p className="text-slate-400 font-bold">শিক্ষার্থীর নাম</p>
+                    <p className="font-extrabold text-slate-800 text-sm mt-0.5">{loggedInStudent.studentName}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 font-bold">শ্রেণী ও রোল আইডি</p>
+                    <p className="font-bold text-slate-700 mt-0.5">{loggedInStudent.studentClass} | {loggedInStudent.studentId}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 font-bold">দুর্বলতার ক্ষেত্র</p>
+                    <p className="font-bold text-slate-700 mt-0.5">{WeaknessCategoryLabels[loggedInStudent.weaknessCategory]} ({WeaknessLevelLabels[loggedInStudent.weaknessLevel]})</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-400 font-bold">শিখন শৈলী (Learning Style)</p>
+                    <p className="font-bold text-slate-700 mt-0.5">{LearningStyleLabels[loggedInStudent.learningStyle]}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-slate-400 font-bold">শ্রেণী ও রোল আইডি</p>
-                  <p className="font-bold text-slate-700 mt-0.5">{loggedInStudent.studentClass} | {loggedInStudent.studentId}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-bold">দুর্বলতার ক্ষেত্র</p>
-                  <p className="font-bold text-slate-700 mt-0.5">{WeaknessCategoryLabels[loggedInStudent.weaknessCategory]} ({WeaknessLevelLabels[loggedInStudent.weaknessLevel]})</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-bold">শিখন শৈলী (Learning Style)</p>
-                  <p className="font-bold text-slate-700 mt-0.5">{LearningStyleLabels[loggedInStudent.learningStyle]}</p>
+
+                {/* Parent Profile Card Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100 text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0">
+                      {loggedInStudent.studentPhoto ? (
+                        <img src={loggedInStudent.studentPhoto} alt={loggedInStudent.studentName} className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                      ) : (
+                        <User className="w-5 h-5 text-slate-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-slate-400 font-bold">শিক্ষার্থীর ছবি</p>
+                      <p className="font-semibold text-slate-800">{loggedInStudent.studentName}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0">
+                      {loggedInStudent.fatherPhoto ? (
+                        <img src={loggedInStudent.fatherPhoto} alt={loggedInStudent.fatherName} className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                      ) : (
+                        <User className="w-5 h-5 text-slate-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-slate-400 font-bold">পিতার নাম ও ছবি</p>
+                      <p className="font-semibold text-slate-800">{loggedInStudent.fatherName || 'উল্লেখ নেই'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center shrink-0">
+                      {loggedInStudent.motherPhoto ? (
+                        <img src={loggedInStudent.motherPhoto} alt={loggedInStudent.motherName} className="w-full h-full object-cover" referrerpolicy="no-referrer" />
+                      ) : (
+                        <User className="w-5 h-5 text-slate-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-slate-400 font-bold">মাতার নাম ও ছবি</p>
+                      <p className="font-semibold text-slate-800">{loggedInStudent.motherName || 'উল্লেখ নেই'}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
