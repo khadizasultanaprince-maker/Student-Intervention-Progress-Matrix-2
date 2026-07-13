@@ -11,7 +11,7 @@ import {
   LearningStyleLabels, 
   ProgressSignalLabels 
 } from '../types';
-import { Trash2, Edit, Search, Filter, RefreshCw, Layers, Mail, Sparkles } from 'lucide-react';
+import { Trash2, Edit, Search, Filter, RefreshCw, Layers, Mail, Sparkles, ChevronDown, ChevronUp, BookOpen, PenTool, UserCheck, Phone, Activity, Calendar } from 'lucide-react';
 import ParentMessageDraftModal from './ParentMessageDraftModal';
 
 interface StudentTableRowProps {
@@ -35,6 +35,7 @@ function StudentTableRow({
   onUpdateGoalStatus
 }: StudentTableRowProps) {
   const [pulseColor, setPulseColor] = useState<'Green' | 'Yellow' | 'Red' | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
   const prevSignalRef = useRef(record.progressSignal);
 
   useEffect(() => {
@@ -63,7 +64,8 @@ function StudentTableRow({
   }
 
   return (
-    <tr key={record.id} className={rowClass}>
+    <>
+      <tr key={record.id} className={rowClass}>
       {/* Column 1: Info */}
       <td className="py-3.5 px-4 align-top">
         <div className="space-y-1">
@@ -278,6 +280,17 @@ function StudentTableRow({
       <td className="py-3.5 px-4 align-middle text-center no-print">
         <div className="flex items-center justify-center gap-1.5">
           <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={`p-1.5 rounded-lg transition cursor-pointer ${
+              isExpanded 
+                ? 'text-indigo-400 bg-indigo-500/10' 
+                : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'
+            }`}
+            title={isExpanded ? "বিস্তারিত তথ্য বন্ধ করুন" : "বিস্তারিত তথ্য ও প্রগতি দেখুন"}
+          >
+            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          <button
             onClick={() => onSelectMessage(record)}
             className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition cursor-pointer"
             title="অভিভাবক বার্তা (SMS/Email) তৈরি করুন"
@@ -287,7 +300,7 @@ function StudentTableRow({
           <button
             onClick={() => onEdit(record)}
             className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition cursor-pointer"
-            title="정보 সংশোধন করুন"
+            title="তথ্য সংশোধন করুন"
           >
             <Edit className="w-4 h-4" />
           </button>
@@ -305,6 +318,120 @@ function StudentTableRow({
         </div>
       </td>
     </tr>
+    {isExpanded && (
+      <tr className="bg-slate-950/40 border-b border-white/10 transition-all duration-300">
+        <td colSpan={6} className="p-5">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs leading-relaxed text-slate-300">
+            {/* Box 1: Diagnostic Weakness Grid */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5 space-y-3">
+              <h4 className="text-xs font-bold text-sky-400 flex items-center gap-1.5 uppercase tracking-wider">
+                <BookOpen className="w-4 h-4" />
+                ১. পড়ার ও লেখার দুর্বলতা ম্যাট্রিক্স
+              </h4>
+              
+              <div className="space-y-2">
+                <div className="border border-white/5 rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-3 bg-white/5 px-2 py-1.5 text-[10px] font-bold text-slate-400 border-b border-white/5">
+                    <span>বিষয়</span>
+                    <span>পড়ার মাত্রা</span>
+                    <span>লেখার মাত্রা</span>
+                  </div>
+                  {[
+                    { name: 'বাংলা', read: record.readingWeaknesses?.bangla, write: record.writingWeaknesses?.bangla },
+                    { name: 'ইংরেজি', read: record.readingWeaknesses?.english, write: record.writingWeaknesses?.english },
+                    { name: 'গণিত', read: record.readingWeaknesses?.math, write: record.writingWeaknesses?.math }
+                  ].map((subj) => {
+                    const getLevelLabel = (level: string | undefined) => {
+                      if (!level || level === 'None') return <span className="text-emerald-400 font-medium">None</span>;
+                      if (level === 'Mild') return <span className="text-blue-400 font-bold">Mild</span>;
+                      if (level === 'Moderate') return <span className="text-amber-400 font-bold">Moderate</span>;
+                      return <span className="text-red-400 font-bold">Severe</span>;
+                    };
+                    return (
+                      <div key={subj.name} className="grid grid-cols-3 px-2 py-1.5 border-b border-white/5 last:border-b-0 items-center">
+                        <span className="font-semibold text-slate-200">{subj.name}</span>
+                        <span>{getLevelLabel(subj.read)}</span>
+                        <span>{getLevelLabel(subj.write)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-2 flex flex-col gap-1 text-[11px] text-slate-400">
+                  <div className="flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-blue-400" />
+                    <span>তথ্য প্রদানকারী শিক্ষক: <strong className="text-slate-200">{record.reportingTeacher || 'N/A'}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>অভিভাবকের মোবাইল নম্বর: <strong className="text-slate-200 font-mono">{record.parentPhone || 'N/A'}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Box 2: 4-Week Progress Evaluation Tracker */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5 space-y-3">
+              <h4 className="text-xs font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider">
+                <Activity className="w-4 h-4" />
+                ২. আগামী ১ মাসের প্রগতি ট্র্যাকার
+              </h4>
+              
+              <div className="space-y-3">
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  {[
+                    { label: 'Week 1', status: record.weeklyProgress?.week1 },
+                    { label: 'Week 2', status: record.weeklyProgress?.week2 },
+                    { label: 'Week 3', status: record.weeklyProgress?.week3 },
+                    { label: 'Week 4', status: record.weeklyProgress?.week4 }
+                  ].map((w) => {
+                    const getStatusBadge = (stat: string | undefined) => {
+                      if (!stat || stat === 'None') return <div className="bg-slate-950 text-slate-500 py-1.5 rounded text-[10px]">রেকর্ড নেই</div>;
+                      if (stat === 'Red') return <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 py-1.5 rounded text-[10px] font-bold">🔴 Red</div>;
+                      if (stat === 'Yellow') return <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 py-1.5 rounded text-[10px] font-bold">🟡 Yellow</div>;
+                      return <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-1.5 rounded text-[10px] font-bold">🟢 Green</div>;
+                    };
+                    return (
+                      <div key={w.label} className="space-y-1 bg-slate-950/20 p-1.5 rounded border border-white/5">
+                        <div className="text-[10px] font-semibold text-slate-400">{w.label}</div>
+                        {getStatusBadge(w.status)}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-slate-950/30 p-2.5 rounded-lg border border-white/5 space-y-1">
+                  <div className="font-semibold text-[11px] text-slate-400">প্রগতি সারাংশ ও মূল্যায়ন:</div>
+                  <p className="text-[11px] text-slate-300">
+                    সাপ্তাহিক প্রগতি সংকেতের ট্রেন্ড পর্যবেক্ষণ করে শিক্ষার্থীর রিয়েল-টাইম ইমপ্রুভমেন্ট এবং বিশেষ সাহায্য প্রয়োজন এমন ক্ষেত্রগুলো চিহ্নিত করুন।
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Box 3: AI Recommendations / Suggestions */}
+            <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5 space-y-3">
+              <h4 className="text-xs font-bold text-indigo-400 flex items-center gap-1.5 uppercase tracking-wider">
+                <Sparkles className="w-4 h-4" />
+                ৩. এআই রিকমেন্ডেশন ও কর্মপরিকল্পনা
+              </h4>
+              
+              <div className="bg-slate-950/50 p-3 rounded-lg border border-indigo-500/10 h-[140px] overflow-y-auto font-sans leading-relaxed text-[11px] text-slate-300 whitespace-pre-wrap">
+                {record.aiSuggestion ? (
+                  record.aiSuggestion
+                ) : (
+                  <div className="text-center py-8 text-slate-500">
+                    <Sparkles className="w-6 h-6 mx-auto text-slate-700 mb-1.5 animate-pulse" />
+                    <span>এই শিক্ষার্থীর জন্য এখনো কোনো এআই রিকমেন্ডেশন জেনারেট করা হয়নি। ফরম এডিটে গিয়ে জেনারেট করুন।</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    )}
+    </>
   );
 }
 

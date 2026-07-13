@@ -15,7 +15,7 @@ import {
   LearningStyleLabels,
   ProgressSignalLabels
 } from '../types';
-import { User, ShieldAlert, Brain, FileSpreadsheet, Send, RefreshCw, X, Target } from 'lucide-react';
+import { User, ShieldAlert, Brain, FileSpreadsheet, Send, RefreshCw, X, Target, Sparkles, Phone, UserCheck, BookOpen, PenTool, HelpCircle, Activity, Calendar } from 'lucide-react';
 
 interface StudentFormProps {
   onSubmit: (record: Omit<StudentRecord, 'id' | 'createdAt'> & { id?: string }) => void;
@@ -49,11 +49,80 @@ const initialFormState = {
   goalTitle: '',
   goalTargetDate: getTwoWeeksFromNow(),
   goalStatus: 'In Progress' as 'In Progress' | 'Achieved' | 'Needs Improvement',
+  
+  // Meeting Format Fields
+  readingBangla: 'None' as 'None' | 'Mild' | 'Moderate' | 'Severe',
+  readingEnglish: 'None' as 'None' | 'Mild' | 'Moderate' | 'Severe',
+  readingMath: 'None' as 'None' | 'Mild' | 'Moderate' | 'Severe',
+  writingBangla: 'None' as 'None' | 'Mild' | 'Moderate' | 'Severe',
+  writingEnglish: 'None' as 'None' | 'Mild' | 'Moderate' | 'Severe',
+  writingMath: 'None' as 'None' | 'Mild' | 'Moderate' | 'Severe',
+  reportingTeacher: '',
+  parentPhone: '',
+  
+  // 1-Month Progress Tracker
+  week1: 'None' as 'None' | 'Red' | 'Yellow' | 'Green',
+  week2: 'None' as 'None' | 'Red' | 'Yellow' | 'Green',
+  week3: 'None' as 'None' | 'Red' | 'Yellow' | 'Green',
+  week4: 'None' as 'None' | 'Red' | 'Yellow' | 'Green',
+  aiSuggestion: '',
 };
 
 export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: StudentFormProps) {
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
+  const handleGenerateAISuggestion = async () => {
+    setIsGeneratingAI(true);
+    try {
+      const response = await fetch('/api/ai-suggestion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentName: formData.studentName,
+          studentClass: formData.studentClass,
+          learningStyle: formData.learningStyle,
+          behavior: formData.behavior,
+          baselineStatus: formData.baselineStatus,
+          currentStatus: formData.currentStatus,
+          readingWeaknesses: {
+            bangla: formData.readingBangla,
+            english: formData.readingEnglish,
+            math: formData.readingMath,
+          },
+          writingWeaknesses: {
+            bangla: formData.writingBangla,
+            english: formData.writingEnglish,
+            math: formData.writingMath,
+          },
+          weeklyProgress: {
+            week1: formData.week1,
+            week2: formData.week2,
+            week3: formData.week3,
+            week4: formData.week4,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({
+        ...prev,
+        aiSuggestion: data.suggestion,
+      }));
+    } catch (err) {
+      console.error(err);
+      alert('এআই সাজেশন জেনারেট করতে সমস্যা হয়েছে। দয়া করে আপনার কানেকশন চেক করুন এবং পুনরায় চেষ্টা করুন।');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   useEffect(() => {
     if (editingRecord) {
@@ -76,6 +145,23 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
         goalTitle: editingRecord.shortTermGoal?.title || '',
         goalTargetDate: editingRecord.shortTermGoal?.targetDate ? editingRecord.shortTermGoal.targetDate.split('T')[0] : getTwoWeeksFromNow(),
         goalStatus: editingRecord.shortTermGoal?.status || 'In Progress',
+        
+        // Meeting Format
+        readingBangla: editingRecord.readingWeaknesses?.bangla || 'None',
+        readingEnglish: editingRecord.readingWeaknesses?.english || 'None',
+        readingMath: editingRecord.readingWeaknesses?.math || 'None',
+        writingBangla: editingRecord.writingWeaknesses?.bangla || 'None',
+        writingEnglish: editingRecord.writingWeaknesses?.english || 'None',
+        writingMath: editingRecord.writingWeaknesses?.math || 'None',
+        reportingTeacher: editingRecord.reportingTeacher || '',
+        parentPhone: editingRecord.parentPhone || '',
+        
+        // 1-Month Progress Tracker
+        week1: editingRecord.weeklyProgress?.week1 || 'None',
+        week2: editingRecord.weeklyProgress?.week2 || 'None',
+        week3: editingRecord.weeklyProgress?.week3 || 'None',
+        week4: editingRecord.weeklyProgress?.week4 || 'None',
+        aiSuggestion: editingRecord.aiSuggestion || '',
       });
       setErrors({});
     } else {
@@ -111,6 +197,7 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
     if (!formData.baselineStatus.trim()) newErrors.baselineStatus = 'প্রাথমিক অবস্থা আবশ্যক';
     if (!formData.currentStatus.trim()) newErrors.currentStatus = 'বর্তমান অবস্থা আবশ্যক';
     if (!formData.strategyUsed.trim()) newErrors.strategyUsed = 'গৃহীত বিশেষ কৌশল বা উদ্যোগ আবশ্যক';
+    if (!formData.reportingTeacher.trim()) newErrors.reportingTeacher = 'তথ্য প্রদানকারী শিক্ষকের নাম আবশ্যক';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -140,7 +227,30 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
         title: formData.goalTitle.trim(),
         targetDate: new Date(formData.goalTargetDate).toISOString(),
         status: formData.goalStatus,
-      } : undefined
+      } : undefined,
+      
+      // Meeting Format
+      readingWeaknesses: {
+        bangla: formData.readingBangla as any,
+        english: formData.readingEnglish as any,
+        math: formData.readingMath as any,
+      },
+      writingWeaknesses: {
+        bangla: formData.writingBangla as any,
+        english: formData.writingEnglish as any,
+        math: formData.writingMath as any,
+      },
+      reportingTeacher: formData.reportingTeacher.trim(),
+      parentPhone: formData.parentPhone.trim(),
+      
+      // 1-Month Progress Tracker
+      weeklyProgress: {
+        week1: formData.week1 as any,
+        week2: formData.week2 as any,
+        week3: formData.week3 as any,
+        week4: formData.week4 as any,
+      },
+      aiSuggestion: formData.aiSuggestion.trim() || undefined,
     };
 
     onSubmit(editingRecord ? { ...recordData, id: editingRecord.id } : recordData);
@@ -560,6 +670,288 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
               </div>
             </div>
           )}
+        </div>
+
+        {/* SECTION 6: Subject-specific Weakness Matrix & Responsible Info */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-white/10 text-slate-200 font-semibold text-sm">
+            <BookOpen className="w-4 h-4 text-sky-400" />
+            <span>৬. পড়া ও লেখার বিষয়ভিত্তিক দুর্বলতা ম্যাট্রিক্স (Meeting Diagnostic Format)</span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/40 p-5 rounded-xl border border-white/5">
+            {/* Reading Weakness */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-sky-400 flex items-center gap-1.5 uppercase tracking-wider">
+                <BookOpen className="w-3.5 h-3.5" />
+                পড়ার ক্ষেত্রে দুর্বলতা (Reading Weaknesses)
+              </h4>
+              
+              <div className="space-y-2">
+                <div>
+                  <label htmlFor="readingBangla" className="block text-[11px] text-slate-300 mb-1">
+                    বাংলা রিডিং (Bangla Reading)
+                  </label>
+                  <select
+                    id="readingBangla"
+                    name="readingBangla"
+                    value={formData.readingBangla}
+                    onChange={handleChange}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  >
+                    <option value="None">কোনো সমস্যা নেই (None)</option>
+                    <option value="Mild">সাধারণ (Mild - একটু যত্নে কাটিয়ে ওঠা সম্ভব)</option>
+                    <option value="Moderate">মাঝারি (Moderate - রেমিডিয়াল ক্লাস প্রয়োজন)</option>
+                    <option value="Severe">তীব্র (Severe - ওয়ান-টু-ওয়ান গাইডেন্স প্রয়োজন)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="readingEnglish" className="block text-[11px] text-slate-300 mb-1">
+                    ইংরেজি রিডিং (English Reading)
+                  </label>
+                  <select
+                    id="readingEnglish"
+                    name="readingEnglish"
+                    value={formData.readingEnglish}
+                    onChange={handleChange}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  >
+                    <option value="None">কোনো সমস্যা নেই (None)</option>
+                    <option value="Mild">সাধারণ (Mild - একটু যত্নে কাটিয়ে ওঠা সম্ভব)</option>
+                    <option value="Moderate">মাঝারি (Moderate - রেমিডিয়াল ক্লাস প্রয়োজন)</option>
+                    <option value="Severe">তীব্র (Severe - ওয়ান-টু-ওয়ান গাইডেন্স প্রয়োজন)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="readingMath" className="block text-[11px] text-slate-300 mb-1">
+                    গাণিতিক দুর্বলতা (Math Reading / Concepts)
+                  </label>
+                  <select
+                    id="readingMath"
+                    name="readingMath"
+                    value={formData.readingMath}
+                    onChange={handleChange}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  >
+                    <option value="None">কোনো সমস্যা নেই (None)</option>
+                    <option value="Mild">সাধারণ (Mild - একটু যত্নে কাটিয়ে ওঠা সম্ভব)</option>
+                    <option value="Moderate">মাঝারি (Moderate - রেমিডিয়াল ক্লাস প্রয়োজন)</option>
+                    <option value="Severe">তীব্র (Severe - ওয়ান-টু-ওয়ান গাইডেন্স প্রয়োজন)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Writing Weakness */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-bold text-purple-400 flex items-center gap-1.5 uppercase tracking-wider">
+                <PenTool className="w-3.5 h-3.5" />
+                লেখার ক্ষেত্রে দুর্বলতা (Writing Weaknesses)
+              </h4>
+              
+              <div className="space-y-2">
+                <div>
+                  <label htmlFor="writingBangla" className="block text-[11px] text-slate-300 mb-1">
+                    বাংলা লিখন (Bangla Writing)
+                  </label>
+                  <select
+                    id="writingBangla"
+                    name="writingBangla"
+                    value={formData.writingBangla}
+                    onChange={handleChange}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="None">কোনো সমস্যা নেই (None)</option>
+                    <option value="Mild">সাধারণ (Mild - হাতের লেখা বা বানানে সামান্য ভুল)</option>
+                    <option value="Moderate">মাঝারি (Moderate - গুছিয়ে লিখতে না পারা)</option>
+                    <option value="Severe">তীব্র (Severe - মৌলিক বানানেও অনেক ভুল)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="writingEnglish" className="block text-[11px] text-slate-300 mb-1">
+                    ইংরেজি লিখন (English Writing)
+                  </label>
+                  <select
+                    id="writingEnglish"
+                    name="writingEnglish"
+                    value={formData.writingEnglish}
+                    onChange={handleChange}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="None">কোনো সমস্যা নেই (None)</option>
+                    <option value="Mild">সাধারণ (Mild - হাতের লেখা বা বানানে সামান্য ভুল)</option>
+                    <option value="Moderate">মাঝারি (Moderate - গুছিয়ে লিখতে না পারা)</option>
+                    <option value="Severe">তীব্র (Severe - মৌলিক বানানেও অনেক ভুল)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="writingMath" className="block text-[11px] text-slate-300 mb-1">
+                    গণিত সমাধান ও গণনা লিখন (Math Writing)
+                  </label>
+                  <select
+                    id="writingMath"
+                    name="writingMath"
+                    value={formData.writingMath}
+                    onChange={handleChange}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="None">কোনো সমস্যা নেই (None)</option>
+                    <option value="Mild">সাধারণ (Mild - গণিত সমাধানে সামান্য জড়তা)</option>
+                    <option value="Moderate">মাঝারি (Moderate - যোগ-বিয়োগের মৌলিক সমস্যা)</option>
+                    <option value="Severe">তীব্র (Severe - সংখ্যা চিনতে বা সাজাতে সম্পূর্ণ ব্যর্থ)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Responsible Team */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/20 p-4 rounded-xl border border-white/5">
+            <div>
+              <label htmlFor="reportingTeacher" className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                <UserCheck className="w-3.5 h-3.5 text-blue-400" />
+                তথ্য প্রদানকারী শিক্ষকের নাম <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                id="reportingTeacher"
+                name="reportingTeacher"
+                value={formData.reportingTeacher}
+                onChange={handleChange}
+                placeholder="যেমন: জনাব আশরাফুল হক"
+                className={`w-full text-sm px-3.5 py-2.5 rounded-lg border focus:ring-2 focus:outline-none transition ${errors.reportingTeacher ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-slate-900/60 text-white' : 'border-white/15 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-900/50 text-white'}`}
+              />
+              {errors.reportingTeacher && <p className="text-red-400 text-xs mt-1">{errors.reportingTeacher}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="parentPhone" className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                অভিভাবকের মোবাইল নম্বর (ঐচ্ছিক)
+              </label>
+              <input
+                type="text"
+                id="parentPhone"
+                name="parentPhone"
+                value={formData.parentPhone}
+                onChange={handleChange}
+                placeholder="যেমন: 01712345678"
+                className="w-full text-sm px-3.5 py-2.5 rounded-lg border border-white/15 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition bg-slate-900/50 text-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 7: Monthly Progress Evaluation & AI suggestions */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-1 border-b border-white/10 text-slate-200 font-semibold text-sm">
+            <Activity className="w-4 h-4 text-emerald-400" />
+            <span>৭. আগামী ১ মাসের সাপ্তাহিক মূল্যায়ন ও এআই প্রগতি পরিকল্পনা</span>
+          </div>
+
+          <p className="text-xs text-slate-400">
+            আগামী ৪ সপ্তাহের জন্য শিক্ষার্থীর উন্নতি ও পরিস্থিতি ট্র্যাকিং করুন। সাপ্তাহিক ফলাফল সাপেক্ষে AI থেকে বিশেষ পেডাগজিক্যাল পরামর্শ নিন।
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { id: 'week1', label: '১ম সপ্তাহ (Week 1)' },
+              { id: 'week2', label: '২য় সপ্তাহ (Week 2)' },
+              { id: 'week3', label: '৩য় সপ্তাহ (Week 3)' },
+              { id: 'week4', label: '৪র্থ সপ্তাহ (Week 4)' }
+            ].map((week) => (
+              <div key={week.id} className="bg-slate-950/30 p-3 rounded-lg border border-white/5 space-y-1">
+                <label htmlFor={week.id} className="block text-[11px] font-semibold text-slate-300">
+                  {week.label}
+                </label>
+                <select
+                  id={week.id}
+                  name={week.id}
+                  value={(formData as any)[week.id]}
+                  onChange={handleChange}
+                  className="w-full text-xs px-2 py-1.5 rounded bg-slate-900 border border-white/10 text-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="None">কোনো প্রগতি রেকর্ড নেই</option>
+                  <option value="Red">🔴 কোনো উন্নতি নেই (Red)</option>
+                  <option value="Yellow">🟡 ধীরে ধীরে প্রগতি হচ্ছে (Yellow)</option>
+                  <option value="Green">🟢 সন্তোষজনক / লক্ষ্য অর্জিত (Green)</option>
+                </select>
+              </div>
+            ))}
+          </div>
+
+          {/* AI Pedagogical Suggestion Panel */}
+          <div className="bg-slate-950/50 border border-white/10 rounded-xl p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                    এআই পেডাগজিক্যাল পরামর্শ ও কর্মপরিকল্পনা
+                  </h4>
+                  <p className="text-xs text-slate-400">শিক্ষার্থীর দুর্বলতা ও সাপ্তাহিক প্রগতি বিশ্লেষণ করে কাস্টমাইজড ১ মাসের একশন প্ল্যান</p>
+                </div>
+              </div>
+              
+              <button
+                type="button"
+                onClick={handleGenerateAISuggestion}
+                disabled={isGeneratingAI || !formData.studentName.trim()}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all cursor-pointer ${
+                  isGeneratingAI 
+                    ? 'bg-indigo-600/50 cursor-not-allowed text-slate-300' 
+                    : !formData.studentName.trim()
+                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                      : 'bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 active:scale-95'
+                }`}
+              >
+                {isGeneratingAI ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>এআই বিশ্লেষণ করছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>এআই পরামর্শ জেনারেট করুন</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {formData.aiSuggestion ? (
+              <div className="space-y-2">
+                <label htmlFor="aiSuggestion" className="block text-xs font-semibold text-indigo-300">
+                  নির্ধারিত শিক্ষণ পরামর্শ ও ১ মাসের অ্যাকশন প্ল্যান (সম্পাদনাযোগ্য):
+                </label>
+                <textarea
+                  id="aiSuggestion"
+                  name="aiSuggestion"
+                  rows={8}
+                  value={formData.aiSuggestion}
+                  onChange={handleChange}
+                  placeholder="এআই পরামর্শ এখানে জেনারেট হবে এবং আপনি প্রয়োজনে কাস্টমাইজ করতে পারবেন..."
+                  className="w-full text-xs p-3.5 rounded-lg border border-indigo-500/20 bg-slate-900/90 text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-sans leading-relaxed shadow-inner"
+                ></textarea>
+                <p className="text-[10px] text-slate-500 text-right">💡 আপনি এআই পরামর্শ সংশোধন বা আপনার মন্তব্য ম্যানুয়ালি যুক্ত করতে পারেন।</p>
+              </div>
+            ) : (
+              <div className="text-center py-6 border border-dashed border-white/5 rounded-lg bg-slate-900/20">
+                <Sparkles className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                <p className="text-xs text-slate-400">
+                  {formData.studentName.trim() 
+                    ? "উপরে শিক্ষার্থীর পড়ার/লেখার দুর্বলতা পূরণ করে 'এআই পরামর্শ জেনারেট করুন' বোতামে চাপুন।" 
+                    : "দয়া করে প্রথমে শিক্ষার্থীর নাম লিখুন।"}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Form Action Buttons */}

@@ -8,6 +8,19 @@ export type WeaknessLevel = 'Mild' | 'Moderate' | 'Severe';
 export type LearningStyle = 'Visual' | 'Auditory' | 'Kinesthetic';
 export type ProgressSignal = 'Red' | 'Yellow' | 'Green';
 
+export interface SubjectWeakness {
+  bangla: 'None' | 'Mild' | 'Moderate' | 'Severe';
+  english: 'None' | 'Mild' | 'Moderate' | 'Severe';
+  math: 'None' | 'Mild' | 'Moderate' | 'Severe';
+}
+
+export interface WeeklyTracker {
+  week1: 'None' | 'Red' | 'Yellow' | 'Green';
+  week2: 'None' | 'Red' | 'Yellow' | 'Green';
+  week3: 'None' | 'Red' | 'Yellow' | 'Green';
+  week4: 'None' | 'Red' | 'Yellow' | 'Green';
+}
+
 export interface ShortTermGoal {
   title: string;
   targetDate: string; // ISO Date String
@@ -34,6 +47,16 @@ export interface StudentRecord {
   teacherRemarks: string;
   createdAt: string; // Timestamp
   shortTermGoal?: ShortTermGoal; // 2-week target goal
+  
+  // Meeting Format Fields
+  readingWeaknesses?: SubjectWeakness;
+  writingWeaknesses?: SubjectWeakness;
+  reportingTeacher?: string; // তথ্যদানকারী শিক্ষকের নাম
+  parentPhone?: string; // অভিভাবকের ফোন নম্বর
+  
+  // Evaluation & Progress Tracking for next 1 month
+  weeklyProgress?: WeeklyTracker;
+  aiSuggestion?: string;
 }
 
 export const WeaknessCategoryLabels: Record<WeaknessCategory, string> = {

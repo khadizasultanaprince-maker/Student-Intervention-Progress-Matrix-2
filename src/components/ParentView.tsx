@@ -20,6 +20,7 @@ import {
   Printer, 
   Calendar,
   User,
+  Phone,
   ExternalLink,
   ChevronRight
 } from 'lucide-react';
@@ -595,6 +596,110 @@ export default function ParentView({ records, onBackToTeacher, onUpdateGoalStatu
                     </div>
                   </div>
 
+                </div>
+
+                {/* 3. Detailed Subject Diagnostics & AI Suggestions */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-xl p-6 space-y-6">
+                  
+                  {/* Subject Weakness Matrix */}
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2 pb-2 border-b border-slate-100">
+                      <BookOpen className="w-4 h-4 text-indigo-600" />
+                      <span>বিষয়ভিত্তিক পড়ার ও লেখার দুর্বলতা ম্যাট্রিক্স (Subject-specific Weakness Matrix)</span>
+                    </h4>
+                    <p className="text-xs text-slate-500">
+                      প্রতিটি বিষয়ের ক্ষেত্রে শিক্ষার্থীর পড়ার ও লেখার দুর্বলতার মাত্রা নিচে বিশদভাবে প্রদর্শন করা হলো:
+                    </p>
+                    
+                    <div className="border border-slate-200/80 rounded-xl overflow-hidden bg-slate-50/50">
+                      <div className="grid grid-cols-3 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 border-b border-slate-200">
+                        <span>বিষয়</span>
+                        <span>পড়ার দুর্বলতা</span>
+                        <span>লেখার দুর্বলতা</span>
+                      </div>
+                      {[
+                        { name: 'বাংলা (Bangla)', read: loggedInStudent.readingWeaknesses?.bangla, write: loggedInStudent.writingWeaknesses?.bangla },
+                        { name: 'ইংরেজি (English)', read: loggedInStudent.readingWeaknesses?.english, write: loggedInStudent.writingWeaknesses?.english },
+                        { name: 'গণিত (Math)', read: loggedInStudent.readingWeaknesses?.math, write: loggedInStudent.writingWeaknesses?.math }
+                      ].map((subj) => {
+                        const getBadge = (lvl: string | undefined) => {
+                          if (!lvl || lvl === 'None') return <span className="text-emerald-600 font-bold bg-emerald-100/60 px-2 py-0.5 rounded text-[10px]">সমস্যা নেই (None)</span>;
+                          if (lvl === 'Mild') return <span className="text-blue-600 font-bold bg-blue-100/60 px-2 py-0.5 rounded text-[10px]">সাধারণ (Mild)</span>;
+                          if (lvl === 'Moderate') return <span className="text-amber-600 font-bold bg-amber-100/60 px-2 py-0.5 rounded text-[10px]">মাঝারি (Moderate)</span>;
+                          return <span className="text-rose-600 font-bold bg-rose-100/60 px-2 py-0.5 rounded text-[10px]">তীব্র (Severe)</span>;
+                        };
+                        return (
+                          <div key={subj.name} className="grid grid-cols-3 px-3 py-2.5 border-b border-slate-150 last:border-b-0 items-center text-xs">
+                            <span className="font-bold text-slate-700">{subj.name}</span>
+                            <span>{getBadge(subj.read)}</span>
+                            <span>{getBadge(subj.write)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 4-Week Progress Evaluation Tracker */}
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2 pb-2 border-b border-slate-100">
+                      <Activity className="w-4 h-4 text-emerald-600" />
+                      <span>আগামী ১ মাসের সাপ্তাহিক মূল্যায়ন পর্যবেক্ষণ (Monthly Progress Tracking)</span>
+                    </h4>
+                    
+                    <div className="grid grid-cols-4 gap-3">
+                      {[
+                        { weekNum: 1, label: '১ম সপ্তাহ (Week 1)', status: loggedInStudent.weeklyProgress?.week1 },
+                        { weekNum: 2, label: '২য় সপ্তাহ (Week 2)', status: loggedInStudent.weeklyProgress?.week2 },
+                        { weekNum: 3, label: '৩য় সপ্তাহ (Week 3)', status: loggedInStudent.weeklyProgress?.week3 },
+                        { weekNum: 4, label: '৪র্থ সপ্তাহ (Week 4)', status: loggedInStudent.weeklyProgress?.week4 }
+                      ].map((w) => {
+                        const getProgressIcon = (stat: string | undefined) => {
+                          if (!stat || stat === 'None') return <span className="text-slate-400 font-medium">রেকর্ড নেই</span>;
+                          if (stat === 'Red') return <span className="text-rose-600 font-bold">🔴 ধীর (Red)</span>;
+                          if (stat === 'Yellow') return <span className="text-amber-600 font-bold">🟡 মাঝারি (Yellow)</span>;
+                          return <span className="text-emerald-600 font-bold">🟢 চমৎকার (Green)</span>;
+                        };
+                        return (
+                          <div key={w.weekNum} className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-center space-y-1">
+                            <p className="text-[10px] font-bold text-slate-400">{w.label}</p>
+                            <p className="text-xs mt-1">{getProgressIcon(w.status)}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* AI Suggestions for Parents / Teachers */}
+                  <div className="p-5 bg-gradient-to-r from-violet-50 to-indigo-50 border border-indigo-100 rounded-2xl space-y-3">
+                    <h5 className="font-bold text-indigo-900 text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                      <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" />
+                      <span>এআই দ্বারা নির্দেশিত ব্যক্তিগত শিখন গাইড ও সাজেশন</span>
+                    </h5>
+                    
+                    <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-medium bg-white/80 p-4 rounded-xl border border-indigo-100/50">
+                      {loggedInStudent.aiSuggestion ? (
+                        loggedInStudent.aiSuggestion
+                      ) : (
+                        <p className="text-slate-400 italic text-center py-2">
+                          এই শিক্ষার্থীর জন্য শ্রেণী শিক্ষক কর্তৃক কোনো এআই সাজেশন তৈরি করা হয়নি।
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Reporting Teacher Information */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs text-slate-500 border-t border-slate-100">
+                    <div className="flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-slate-400" />
+                      <span>তথ্য প্রদানকারী শিক্ষক: <strong className="text-slate-700">{loggedInStudent.reportingTeacher || 'N/A'}</strong></span>
+                    </div>
+                    {loggedInStudent.parentPhone && (
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="w-4 h-4 text-slate-400" />
+                        <span>অভিভাবকের মোবাইল: <strong className="text-slate-700 font-mono">{loggedInStudent.parentPhone}</strong></span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
               </div>
