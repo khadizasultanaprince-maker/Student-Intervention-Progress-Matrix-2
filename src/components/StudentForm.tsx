@@ -36,6 +36,7 @@ const initialFormState = {
   baselineStatus: '',
   currentStatus: '',
   progressSignal: 'Yellow' as ProgressSignal,
+  lastWeekProgressSignal: 'Yellow' as ProgressSignal,
   strategyUsed: '',
   teacherRemarks: '',
 };
@@ -59,6 +60,7 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
         baselineStatus: editingRecord.baselineStatus,
         currentStatus: editingRecord.currentStatus,
         progressSignal: editingRecord.progressSignal,
+        lastWeekProgressSignal: editingRecord.lastWeekProgressSignal || editingRecord.progressSignal || 'Yellow',
         strategyUsed: editingRecord.strategyUsed,
         teacherRemarks: editingRecord.teacherRemarks,
       });
@@ -317,7 +319,7 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
             <span>৪. প্রগতি পর্যবেক্ষণ, যোগ্যতা ও হস্তক্ষেপ (Competency & Intervention)</span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label htmlFor="baselineStatus" className="block text-xs font-semibold text-slate-300 mb-1">
                 প্রাথমিক অবস্থা (Baseline Status) <span className="text-red-400">*</span>
@@ -351,8 +353,37 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
             </div>
 
             <div>
+              <label htmlFor="lastWeekProgressSignal" className="block text-xs font-semibold text-slate-300 mb-1">
+                গত সপ্তাহের প্রগতি সংকেত
+              </label>
+              <div className="grid grid-cols-3 gap-1.5 h-[42px] items-center">
+                {(['Red', 'Yellow', 'Green'] as ProgressSignal[]).map((sig) => {
+                  const data = ProgressSignalLabels[sig];
+                  const isSelected = formData.lastWeekProgressSignal === sig;
+                  return (
+                    <button
+                      key={`last-${sig}`}
+                      type="button"
+                      onClick={() => setFormData(p => ({ ...p, lastWeekProgressSignal: sig }))}
+                      className={`flex items-center justify-center gap-1 h-full rounded-lg text-[10px] border font-medium transition cursor-pointer ${
+                        isSelected 
+                          ? `${data.bgClass} border-white/20 ring-2 ring-amber-500/40 text-white` 
+                          : 'bg-slate-900/40 border-white/10 hover:bg-white/5 text-slate-300'
+                      }`}
+                    >
+                      <span>{data.emoji}</span>
+                      <span>
+                        {sig === 'Red' ? 'ধীর' : sig === 'Yellow' ? 'মাঝারি' : 'সন্তোষ'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
               <label htmlFor="progressSignal" className="block text-xs font-semibold text-slate-300 mb-1">
-                প্রগতি সংকেত (Progress Signal)
+                বর্তমান সপ্তাহের প্রগতি সংকেত
               </label>
               <div className="grid grid-cols-3 gap-1.5 h-[42px] items-center">
                 {(['Red', 'Yellow', 'Green'] as ProgressSignal[]).map((sig) => {
@@ -360,10 +391,10 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
                   const isSelected = formData.progressSignal === sig;
                   return (
                     <button
-                      key={sig}
+                      key={`curr-${sig}`}
                       type="button"
                       onClick={() => setFormData(p => ({ ...p, progressSignal: sig }))}
-                      className={`flex items-center justify-center gap-1.5 h-full rounded-lg text-xs border font-medium transition cursor-pointer ${
+                      className={`flex items-center justify-center gap-1 h-full rounded-lg text-[10px] border font-medium transition cursor-pointer ${
                         isSelected 
                           ? `${data.bgClass} border-white/20 ring-2 ring-blue-500/40 text-white` 
                           : 'bg-slate-900/40 border-white/10 hover:bg-white/5 text-slate-300'
@@ -371,7 +402,7 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
                     >
                       <span>{data.emoji}</span>
                       <span>
-                        {sig === 'Red' ? 'ধীর' : sig === 'Yellow' ? 'মাঝারি' : 'সন্তোষজনক'}
+                        {sig === 'Red' ? 'ধীর' : sig === 'Yellow' ? 'মাঝারি' : 'সন্তোষ'}
                       </span>
                     </button>
                   );

@@ -10,6 +10,13 @@ import StudentForm from './components/StudentForm';
 import StudentTable from './components/StudentTable';
 import PrintReportView from './components/PrintReportView';
 import PresentationGuide from './components/PresentationGuide';
+import StudentAnalytics from './components/StudentAnalytics';
+import TeacherQuickPanel from './components/TeacherQuickPanel';
+import DailyMannerDiary from './components/DailyMannerDiary';
+import AlertNotificationCenter from './components/AlertNotificationCenter';
+import TeacherGuidebook from './components/TeacherGuidebook';
+import WeeklyProgressChart from './components/WeeklyProgressChart';
+import ParentView from './components/ParentView';
 import { 
   Printer, 
   RotateCcw, 
@@ -25,10 +32,13 @@ import {
   Copy,
   Check,
   Upload,
-  X
+  X,
+  Download,
+  Users
 } from 'lucide-react';
 
 export default function App() {
+  const [viewMode, setViewMode] = useState<'teacher' | 'parent'>('teacher');
   const [records, setRecords] = useState<StudentRecord[]>([]);
   const [editingRecord, setEditingRecord] = useState<StudentRecord | null>(null);
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -56,6 +66,7 @@ export default function App() {
 
   // Load initial data from localStorage or fallback to sampleData
   useEffect(() => {
+    document.title = "শিক্ষার্থী উন্নয়ন ও প্রগতি পর্যবেক্ষণ";
     const saved = localStorage.getItem('student_intervention_records');
     if (saved) {
       try {
@@ -195,6 +206,16 @@ export default function App() {
 
               <button
                 onClick={() => setShowPrintModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-lg shadow-emerald-600/25 cursor-pointer transition active:scale-95"
+                title="পিডিএফ ফরম্যাটে অফলাইনে ডাউনলোড বা সংরক্ষণ করুন"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">পিডিএফ ডাউনলোড</span>
+                <span className="sm:hidden">PDF</span>
+              </button>
+
+              <button
+                onClick={() => setShowPrintModal(true)}
                 className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-lg shadow-blue-600/25 cursor-pointer transition active:scale-95"
               >
                 <Printer className="w-3.5 h-3.5" />
@@ -207,97 +228,158 @@ export default function App() {
         {/* Workspace Hub */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           
-          {/* Institutional Banner Details & Framework Intro */}
-          <div className="bg-gradient-to-r from-slate-900/60 to-slate-800/40 border border-white/10 backdrop-blur-md rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
-            <div className="absolute right-0 bottom-0 opacity-5 pointer-events-none translate-x-12 translate-y-12">
-              <GraduationCap className="w-96 h-96" />
+          {/* View Mode Switcher */}
+          <div className="flex flex-col sm:flex-row items-center justify-between bg-slate-900/60 border border-white/10 rounded-2xl p-4 gap-4 backdrop-blur-md">
+            <div className="text-left">
+              <h3 className="text-xs font-bold text-slate-200">ড্যাশবোর্ড ভিউ মোড পরিবর্তন করুন (Switch Workspace View)</h3>
+              <p className="text-[10px] text-slate-400 font-light">আপনার প্রয়োজন অনুযায়ী শিক্ষক অথবা অভিভাবক প্যানেল নির্বাচন করুন</p>
             </div>
-            
-            <div className="max-w-3xl space-y-3 relative z-10">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-semibold text-blue-200">
-                <Sparkles className="w-3 h-3" />
-                <span>প্রাতিষ্ঠানিক বিশেষ শিক্ষা সহকারী কাঠামো</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                শিক্ষার্থী উন্নয়ন ও প্রগতি পর্যবেক্ষণ ম্যাট্রিক্স (Student Intervention & Progress Matrix)
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-light">
-                সংগ্রামরত শিক্ষার্থীদের পাঠোন্নতি ও মনস্তাত্ত্বিক বিকাশ পর্যবেক্ষণের জন্য এই অ্যাপ্লিকেশনটি ৩টি প্রধান পদ্ধতিকে একত্রিত করে:
-              </p>
-
-              {/* Three Combined Frameworks Badges */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-                <div className="flex items-start gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                  <div className="p-1 rounded bg-blue-500/20 text-blue-300 mt-0.5">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-blue-200">১. সাধারণ ডায়াগনস্টিক</h4>
-                    <p className="text-[10px] text-slate-400 font-light">দুর্বলতার বিষয়, তীব্রতা ও নেপথ্য কারণ নির্ধারণ</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                  <div className="p-1 rounded bg-blue-500/20 text-blue-300 mt-0.5">
-                    <Brain className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-blue-200">২. মনস্তাত্ত্বিক ম্যাপিং</h4>
-                    <p className="text-[10px] text-slate-400 font-light">শিখন শৈলী, ক্লাসে আচরণ ও সুপ্ত প্রতিভা উন্মোচন</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                  <div className="p-1 rounded bg-blue-500/20 text-blue-300 mt-0.5">
-                    <TrendingUp className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-blue-200">৩. প্রগতি পর্যবেক্ষণ</h4>
-                    <p className="text-[10px] text-slate-400 font-light">বেসলাইন বনাম বর্তমান সক্ষমতা ও অগ্রগতি সিগন্যাল</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Area with Collapsible Accordion Header */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-white/5 backdrop-blur-md border border-white/10 px-6 py-3 rounded-xl shadow-md">
-              <button 
-                onClick={() => setIsFormExpanded(!isFormExpanded)}
-                className="flex items-center gap-2 text-slate-200 font-bold text-sm hover:text-white transition cursor-pointer w-full text-left"
+            <div className="flex bg-slate-950/80 p-1 rounded-xl w-full sm:w-auto border border-white/5">
+              <button
+                onClick={() => setViewMode('teacher')}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition duration-200 cursor-pointer ${
+                  viewMode === 'teacher'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/10'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                <PlusCircle className="w-4 h-4 text-blue-400" />
-                <span>
-                  {editingRecord ? 'তথ্য আপডেট ফর্ম (চলমান)' : 'নতুন শিক্ষার্থী ও মূল্যায়ন ফর্ম যুক্ত করুন'}
-                </span>
-                {isFormExpanded ? <ChevronUp className="w-4 h-4 ml-auto text-slate-400" /> : <ChevronDown className="w-4 h-4 ml-auto text-slate-400" />}
+                <GraduationCap className="w-4 h-4" />
+                <span>শিক্ষক প্যানেল</span>
+              </button>
+              <button
+                onClick={() => setViewMode('parent')}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition duration-200 cursor-pointer ${
+                  viewMode === 'parent'
+                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/10'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>অভিভাবক কর্নার</span>
               </button>
             </div>
-
-            {isFormExpanded && (
-              <div className="animate-fade-in-down">
-                <StudentForm 
-                  onSubmit={handleFormSubmit}
-                  editingRecord={editingRecord}
-                  onCancelEdit={() => {
-                    setEditingRecord(null);
-                    setIsFormExpanded(false);
-                  }}
-                />
-              </div>
-            )}
           </div>
 
-          {/* Data Table */}
-          <StudentTable 
-            records={records}
-            onDelete={handleDeleteRecord}
-            onEdit={handleEditTrigger}
-          />
+          {viewMode === 'teacher' ? (
+            <>
+              {/* Live Alerts & Notification Center for Red Signals */}
+              <AlertNotificationCenter records={records} />
+              
+              {/* Institutional Banner Details & Framework Intro */}
+              <div className="bg-gradient-to-r from-slate-900/60 to-slate-800/40 border border-white/10 backdrop-blur-md rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+                <div className="absolute right-0 bottom-0 opacity-5 pointer-events-none translate-x-12 translate-y-12">
+                  <GraduationCap className="w-96 h-96" />
+                </div>
+                
+                <div className="max-w-3xl space-y-3 relative z-10">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-semibold text-blue-200">
+                    <Sparkles className="w-3 h-3" />
+                    <span>প্রাতিষ্ঠানিক বিশেষ শিক্ষা সহকারী কাঠামো</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                    শিক্ষার্থী উন্নয়ন ও প্রগতি পর্যবেক্ষণ ম্যাট্রিক্স (Student Intervention & Progress Matrix)
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-light font-medium text-left">
+                    সংগ্রামরত শিক্ষার্থীদের পাঠোন্নতি ও মনস্তাত্ত্বিক বিকাশ পর্যবেক্ষণের জন্য এই অ্যাপ্লিকেশনটি ৩টি প্রধান পদ্ধতিকে একত্রিত করে:
+                  </p>
 
-          {/* Presentation and Implementation Guidelines Mappings */}
-          <PresentationGuide />
+                  {/* Three Combined Frameworks Badges */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                    <div className="flex items-start gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl text-left">
+                      <div className="p-1 rounded bg-blue-500/20 text-blue-300 mt-0.5">
+                        <BookOpen className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-blue-200">১. সাধারণ ডায়াগনস্টিক</h4>
+                        <p className="text-[10px] text-slate-400 font-light">দুর্বলতার বিষয়, তীব্রতা ও নেপথ্য কারণ নির্ধারণ</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl text-left">
+                      <div className="p-1 rounded bg-blue-500/20 text-blue-300 mt-0.5">
+                        <Brain className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-blue-200">২. মনস্তাত্ত্বিক ম্যাপিং</h4>
+                        <p className="text-[10px] text-slate-400 font-light">শিখন শৈলী, ক্লাসে আচরণ ও সুপ্ত প্রতিভা উন্মোচন</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-2 bg-white/5 border border-white/10 p-2.5 rounded-xl text-left">
+                      <div className="p-1 rounded bg-blue-500/20 text-blue-300 mt-0.5">
+                        <TrendingUp className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-blue-200">৩. প্রগতি পর্যবেক্ষণ</h4>
+                        <p className="text-[10px] text-slate-400 font-light">বেসলাইন বনাম বর্তমান সক্ষমতা ও অগ্রগতি সিগন্যাল</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Teacher's Work Hub & Quick Panel */}
+              <TeacherQuickPanel records={records} />
+
+              {/* Form Area with Collapsible Accordion Header */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between bg-white/5 backdrop-blur-md border border-white/10 px-6 py-3 rounded-xl shadow-md">
+                  <button 
+                    onClick={() => setIsFormExpanded(!isFormExpanded)}
+                    className="flex items-center gap-2 text-slate-200 font-bold text-sm hover:text-white transition cursor-pointer w-full text-left"
+                  >
+                    <PlusCircle className="w-4 h-4 text-blue-400" />
+                    <span>
+                      {editingRecord ? 'তথ্য আপডেট ফর্ম (চলমান)' : 'নতুন শিক্ষার্থী ও মূল্যায়ন ফর্ম যুক্ত করুন'}
+                    </span>
+                    {isFormExpanded ? <ChevronUp className="w-4 h-4 ml-auto text-slate-400" /> : <ChevronDown className="w-4 h-4 ml-auto text-slate-400" />}
+                  </button>
+                </div>
+
+                {isFormExpanded && (
+                  <div className="animate-fade-in-down">
+                    <StudentForm 
+                      onSubmit={handleFormSubmit}
+                      editingRecord={editingRecord}
+                      onCancelEdit={() => {
+                        setEditingRecord(null);
+                        setIsFormExpanded(false);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Data Table */}
+              <StudentTable 
+                records={records}
+                onDelete={handleDeleteRecord}
+                onEdit={handleEditTrigger}
+              />
+
+              {/* Student Progress Visualization Dashboard */}
+              <StudentAnalytics records={records} />
+
+              {/* Weekly Progress Comparison Line Chart */}
+              <WeeklyProgressChart records={records} />
+
+              {/* Daily Manner Diary */}
+              <DailyMannerDiary records={records} />
+
+              {/* Teacher Pedagogy Guidebook */}
+              <TeacherGuidebook />
+
+              {/* Presentation and Implementation Guidelines Mappings */}
+              <PresentationGuide />
+            </>
+          ) : (
+            <div className="animate-fade-in">
+              <ParentView 
+                records={records} 
+                onBackToTeacher={() => setViewMode('teacher')} 
+              />
+            </div>
+          )}
 
         </main>
       </div>

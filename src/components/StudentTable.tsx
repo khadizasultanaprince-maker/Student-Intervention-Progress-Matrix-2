@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   StudentRecord, 
   WeaknessCategoryLabels, 
@@ -11,7 +11,198 @@ import {
   LearningStyleLabels, 
   ProgressSignalLabels 
 } from '../types';
-import { Trash2, Edit, Search, Filter, RefreshCw, Layers } from 'lucide-react';
+import { Trash2, Edit, Search, Filter, RefreshCw, Layers, Mail, Sparkles } from 'lucide-react';
+import ParentMessageDraftModal from './ParentMessageDraftModal';
+
+interface StudentTableRowProps {
+  key?: string;
+  record: StudentRecord;
+  onEdit: (record: StudentRecord) => void;
+  onDelete: (id: string) => void;
+  onSelectMessage: (record: any) => void;
+  getLevelBadgeClass: (level: string) => string;
+  getStyleBadgeClass: (style: string) => string;
+}
+
+function StudentTableRow({
+  record,
+  onEdit,
+  onDelete,
+  onSelectMessage,
+  getLevelBadgeClass,
+  getStyleBadgeClass
+}: StudentTableRowProps) {
+  const [pulseColor, setPulseColor] = useState<'Green' | 'Yellow' | 'Red' | null>(null);
+  const prevSignalRef = useRef(record.progressSignal);
+
+  useEffect(() => {
+    if (prevSignalRef.current !== record.progressSignal) {
+      setPulseColor(record.progressSignal);
+      prevSignalRef.current = record.progressSignal;
+      
+      // Keep pulsing for 6 seconds (enough time for the user to see the transition)
+      const timer = setTimeout(() => {
+        setPulseColor(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [record.progressSignal]);
+
+  const signal = ProgressSignalLabels[record.progressSignal];
+  
+  // Choose the row background styling based on whether it is pulsing or not
+  let rowClass = "hover:bg-white/5 transition duration-150 relative ";
+  if (pulseColor === 'Green') {
+    rowClass += "animate-row-pulse-Green border-l-4 border-l-emerald-500";
+  } else if (pulseColor === 'Yellow') {
+    rowClass += "animate-row-pulse-Yellow border-l-4 border-l-amber-500";
+  } else if (pulseColor === 'Red') {
+    rowClass += "animate-row-pulse-Red border-l-4 border-l-rose-500";
+  }
+
+  return (
+    <tr key={record.id} className={rowClass}>
+      {/* Column 1: Info */}
+      <td className="py-3.5 px-4 align-top">
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <div className="font-bold text-white text-sm">{record.studentName}</div>
+            {pulseColor && (
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-500 text-white animate-bounce">
+                <Sparkles className="w-2.5 h-2.5" />
+                <span>আপডেট</span>
+              </span>
+            )}
+          </div>
+          <div className="text-xs font-semibold text-slate-300 bg-slate-800 px-2 py-0.5 rounded inline-block font-mono">
+            ID: {record.studentId}
+          </div>
+          <div className="text-xs text-slate-400 block pt-0.5">
+            {record.studentClass}
+          </div>
+        </div>
+      </td>
+
+      {/* Column 2: Diagnostic */}
+      <td className="py-3.5 px-4 align-top">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap gap-1">
+            <span className="text-[10px] font-semibold border px-1.5 py-0.5 rounded-md bg-teal-500/10 text-teal-300 border-teal-500/20">
+              {WeaknessCategoryLabels[record.weaknessCategory]}
+            </span>
+            <span className={`text-[10px] font-semibold border px-1.5 py-0.5 rounded-md ${getLevelBadgeClass(record.weaknessLevel)}`}>
+              {WeaknessLevelLabels[record.weaknessLevel]}
+            </span>
+          </div>
+          <div className="text-xs text-slate-300 leading-relaxed">
+            <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">দুর্বলতার কারণ:</span>
+            {record.rootCause}
+          </div>
+        </div>
+      </td>
+
+      {/* Column 3: Mind Mapping */}
+      <td className="py-3.5 px-4 align-top">
+        <div className="space-y-2">
+          <div>
+            <span className="text-[11px] font-semibold text-slate-400 block">শিখন শৈলী:</span>
+            <span className={`text-[10px] font-semibold border px-1.5 py-0.5 rounded ${getStyleBadgeClass(record.learningStyle)}`}>
+              {LearningStyleLabels[record.learningStyle]}
+            </span>
+          </div>
+          <div className="text-xs text-slate-300">
+            <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">আচরণগত বৈশিষ্ট্য:</span>
+            {record.behavior}
+          </div>
+          {record.hiddenTalent && (
+            <div className="text-xs text-teal-300">
+              <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">বিশেষ প্রতিভা:</span>
+              ✨ {record.hiddenTalent}
+            </div>
+          )}
+        </div>
+      </td>
+
+      {/* Column 4: Monitoring */}
+      <td className="py-3.5 px-4 align-top">
+        <div className="space-y-2">
+          <div className="text-xs">
+            <span className="font-semibold text-rose-300 block text-[11px] mb-0.5">প্রাথমিক সক্ষমতা (Baseline):</span>
+            <span className="text-slate-300 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded block">
+              {record.baselineStatus}
+            </span>
+          </div>
+          <div className="text-xs">
+            <span className="font-semibold text-emerald-300 block text-[11px] mb-0.5">বর্তমান সক্ষমতা (Current):</span>
+            <span className="text-slate-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded block">
+              {record.currentStatus}
+            </span>
+          </div>
+          <div>
+            <span className="font-semibold text-slate-400 block text-[11px] mb-1">প্রগতি ও প্রবৃদ্ধি সংকেত:</span>
+            <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 border rounded-full text-white transition-all duration-300 ${
+              pulseColor ? 'scale-110 ring-4 ring-indigo-500/20' : ''
+            } ${
+              record.progressSignal === 'Green' ? 'bg-emerald-950/80 border-emerald-500/30 text-emerald-300 shadow-md shadow-emerald-950/50' :
+              record.progressSignal === 'Yellow' ? 'bg-amber-950/80 border-amber-500/30 text-amber-300 shadow-md shadow-amber-950/50' :
+              'bg-rose-950/80 border-rose-500/30 text-rose-300 shadow-md shadow-rose-950/50'
+            }`}>
+              <span className={pulseColor ? 'animate-ping' : ''}>{signal.emoji}</span>
+              <span>{signal.label}</span>
+            </span>
+          </div>
+        </div>
+      </td>
+
+      {/* Column 5: Intervention & Remarks */}
+      <td className="py-3.5 px-4 align-top">
+        <div className="space-y-2 text-xs leading-relaxed">
+          <div>
+            <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">গৃহীত বিশেষ কৌশল:</span>
+            <p className="text-slate-300 bg-slate-950/40 px-2 py-1 rounded border border-white/5">{record.strategyUsed}</p>
+          </div>
+          {record.teacherRemarks && (
+            <div>
+              <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">শিক্ষকের মন্তব্য:</span>
+              <p className="text-slate-400 italic">“{record.teacherRemarks}”</p>
+            </div>
+          )}
+        </div>
+      </td>
+
+      {/* Column 6: Actions */}
+      <td className="py-3.5 px-4 align-middle text-center no-print">
+        <div className="flex items-center justify-center gap-1.5">
+          <button
+            onClick={() => onSelectMessage(record)}
+            className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition cursor-pointer"
+            title="অভিভাবক বার্তা (SMS/Email) তৈরি করুন"
+          >
+            <Mail className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onEdit(record)}
+            className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition cursor-pointer"
+            title="정보 সংশোধন করুন"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`আপনি কি নিশ্চিতভাবে ${record.studentName}-এর তথ্য ডিলিট করতে চান?`)) {
+                onDelete(record.id);
+              }
+            }}
+            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+            title="ডিলিট করুন"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 interface StudentTableProps {
   records: StudentRecord[];
@@ -20,9 +211,14 @@ interface StudentTableProps {
 }
 
 export default function StudentTable({ records, onDelete, onEdit }: StudentTableProps) {
+  const [selectedMessageRecord, setSelectedMessageRecord] = useState<StudentRecord | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [classFilter, setClassFilter] = useState<string>('All');
+  const [signalFilter, setSignalFilter] = useState<string>('All');
+  const [levelFilter, setLevelFilter] = useState<string>('All');
+  const [styleFilter, setStyleFilter] = useState<string>('All');
+
 
   // Extract unique classes for filtering
   const classes = Array.from(new Set(records.map(r => r.studentClass)));
@@ -35,8 +231,11 @@ export default function StudentTable({ records, onDelete, onEdit }: StudentTable
     
     const matchesCategory = categoryFilter === 'All' || record.weaknessCategory === categoryFilter;
     const matchesClass = classFilter === 'All' || record.studentClass === classFilter;
+    const matchesSignal = signalFilter === 'All' || record.progressSignal === signalFilter;
+    const matchesLevel = levelFilter === 'All' || record.weaknessLevel === levelFilter;
+    const matchesStyle = styleFilter === 'All' || record.learningStyle === styleFilter;
 
-    return matchesSearch && matchesCategory && matchesClass;
+    return matchesSearch && matchesCategory && matchesClass && matchesSignal && matchesLevel && matchesStyle;
   });
 
   const getLevelBadgeClass = (level: string) => {
@@ -65,74 +264,166 @@ export default function StudentTable({ records, onDelete, onEdit }: StudentTable
     }
   };
 
+  const hasActiveFilters = searchTerm || categoryFilter !== 'All' || classFilter !== 'All' || signalFilter !== 'All' || levelFilter !== 'All' || styleFilter !== 'All';
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setCategoryFilter('All');
+    setClassFilter('All');
+    setSignalFilter('All');
+    setLevelFilter('All');
+    setStyleFilter('All');
+  };
+
   return (
     <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl shadow-xl border border-white/10 overflow-hidden space-y-4">
+      <style>{`
+        @keyframes pulseGreenRow {
+          0%, 100% { background-color: rgba(16, 185, 129, 0.02); }
+          50% { background-color: rgba(16, 185, 129, 0.12); }
+        }
+        @keyframes pulseYellowRow {
+          0%, 100% { background-color: rgba(245, 158, 11, 0.02); }
+          50% { background-color: rgba(245, 158, 11, 0.12); }
+        }
+        @keyframes pulseRedRow {
+          0%, 100% { background-color: rgba(239, 68, 68, 0.02); }
+          50% { background-color: rgba(239, 68, 68, 0.12); }
+        }
+        .animate-row-pulse-Green {
+          animation: pulseGreenRow 1.4s ease-in-out infinite;
+        }
+        .animate-row-pulse-Yellow {
+          animation: pulseYellowRow 1.4s ease-in-out infinite;
+        }
+        .animate-row-pulse-Red {
+          animation: pulseRedRow 1.4s ease-in-out infinite;
+        }
+      `}</style>
       {/* Search and Filters Header */}
-      <div className="p-5 border-b border-white/10 no-print">
+      <div className="p-6 border-b border-white/10 no-print space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Layers className="w-5 h-5 text-blue-400" />
               <span>নিবন্ধিত শিক্ষার্থীদের পর্যবেক্ষণ তালিকা ({filteredRecords.length} জন)</span>
             </h3>
-            <p className="text-xs text-slate-400">শিক্ষার্থীদের তথ্য অনুসন্ধান, ফিল্টার ও পরিচালনা করুন</p>
+            <p className="text-xs text-slate-400">শিক্ষার্থীদের তথ্য অনুসন্ধান, প্রগতি ও ধরন অনুযায়ী ফিল্টার করুন</p>
           </div>
           
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Search Box */}
+          {hasActiveFilters && (
+            <button 
+              onClick={handleResetFilters}
+              className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 transition cursor-pointer self-start md:self-auto"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>সব ফিল্টার রিসেট</span>
+            </button>
+          )}
+        </div>
+
+        {/* Filters Matrix Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5 pt-2">
+          {/* 1. Search Box */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+              <Search className="w-3 h-3 text-blue-400" /> শিক্ষার্থী খুঁজুন
+            </label>
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="নাম বা আইডি খুঁজুন..."
+                placeholder="নাম বা আইডি লিখুন..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-3.5 py-1.5 text-xs rounded-lg border border-white/15 bg-slate-900/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-44 transition"
+                className="w-full pl-8.5 pr-3 py-2 text-xs rounded-xl border border-white/15 bg-slate-950/40 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/80 transition"
               />
             </div>
+          </div>
 
-            {/* Category Filter */}
-            <div className="flex items-center gap-1.5">
-              <Filter className="w-3.5 h-3.5 text-slate-400" />
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="text-xs py-1.5 pl-2 pr-6 rounded-lg border border-white/15 bg-slate-900/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              >
-                <option value="All" className="bg-slate-950 text-white">সকল দুর্বলতা</option>
-                {Object.entries(WeaknessCategoryLabels).map(([key, label]) => (
-                  <option key={key} value={key} className="bg-slate-950 text-white">{label}</option>
-                ))}
-              </select>
-            </div>
+          {/* 2. Class Filter */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-blue-400" /> শ্রেণী ফিল্টার
+            </label>
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="w-full text-xs py-2 pl-2 pr-6 rounded-xl border border-white/15 bg-slate-950/40 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/80"
+            >
+              <option value="All" className="bg-slate-950 text-white">সকল শ্রেণী (All)</option>
+              {classes.map(cls => (
+                <option key={cls} value={cls} className="bg-slate-950 text-white">{cls}</option>
+              ))}
+            </select>
+          </div>
 
-            {/* Class Filter */}
-            {classes.length > 0 && (
-              <select
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-                className="text-xs py-1.5 pl-2 pr-6 rounded-lg border border-white/15 bg-slate-900/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              >
-                <option value="All" className="bg-slate-950 text-white">সকল শ্রেণী</option>
-                {classes.map(cls => (
-                  <option key={cls} value={cls} className="bg-slate-950 text-white">{cls}</option>
-                ))}
-              </select>
-            )}
+          {/* 3. Category Filter */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-blue-400" /> দুর্বলতার ধরন
+            </label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full text-xs py-2 pl-2 pr-6 rounded-xl border border-white/15 bg-slate-950/40 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/80"
+            >
+              <option value="All" className="bg-slate-950 text-white">সকল দুর্বলতা (All)</option>
+              {Object.entries(WeaknessCategoryLabels).map(([key, label]) => (
+                <option key={key} value={key} className="bg-slate-950 text-white">{label}</option>
+              ))}
+            </select>
+          </div>
 
-            {(searchTerm || categoryFilter !== 'All' || classFilter !== 'All') && (
-              <button 
-                onClick={() => {
-                  setSearchTerm('');
-                  setCategoryFilter('All');
-                  setClassFilter('All');
-                }}
-                className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-rose-500/10 transition cursor-pointer"
-              >
-                <RefreshCw className="w-3 h-3" />
-                <span>রিসেট</span>
-              </button>
-            )}
+          {/* 4. Severity Level Filter */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-blue-400" /> তীব্রতার স্তর
+            </label>
+            <select
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value)}
+              className="w-full text-xs py-2 pl-2 pr-6 rounded-xl border border-white/15 bg-slate-950/40 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/80"
+            >
+              <option value="All" className="bg-slate-950 text-white">সকল স্তর (All)</option>
+              {Object.entries(WeaknessLevelLabels).map(([key, label]) => (
+                <option key={key} value={key} className="bg-slate-950 text-white">{label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 5. Progress Signal Filter */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-blue-400" /> প্রগতি সংকেত
+            </label>
+            <select
+              value={signalFilter}
+              onChange={(e) => setSignalFilter(e.target.value)}
+              className="w-full text-xs py-2 pl-2 pr-6 rounded-xl border border-white/15 bg-slate-950/40 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/80"
+            >
+              <option value="All" className="bg-slate-950 text-white">সকল সংকেত (All)</option>
+              <option value="Green" className="bg-slate-950 text-green-400">🟢 সন্তোষজনক / দ্রুত প্রগতি</option>
+              <option value="Yellow" className="bg-slate-950 text-amber-400">🟡 উন্নতিশীল / মাঝারি প্রগতি</option>
+              <option value="Red" className="bg-slate-950 text-red-400">🔴 উদ্বেগজনক / ধীর প্রগতি</option>
+            </select>
+          </div>
+
+          {/* 6. Learning Style Filter */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-blue-400" /> শিখন শৈলী (Style)
+            </label>
+            <select
+              value={styleFilter}
+              onChange={(e) => setStyleFilter(e.target.value)}
+              className="w-full text-xs py-2 pl-2 pr-6 rounded-xl border border-white/15 bg-slate-950/40 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/80"
+            >
+              <option value="All" className="bg-slate-950 text-white">সকল শৈলী (All)</option>
+              {Object.entries(LearningStyleLabels).map(([key, label]) => (
+                <option key={key} value={key} className="bg-slate-950 text-white">{label}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
@@ -169,134 +460,28 @@ export default function StudentTable({ records, onDelete, onEdit }: StudentTable
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredRecords.map((record) => {
-                const signal = ProgressSignalLabels[record.progressSignal];
-                return (
-                  <tr key={record.id} className="hover:bg-white/5 transition duration-150">
-                    {/* Column 1: Info */}
-                    <td className="py-3.5 px-4 align-top">
-                      <div className="space-y-1">
-                        <div className="font-bold text-white text-sm">{record.studentName}</div>
-                        <div className="text-xs font-semibold text-slate-300 bg-slate-800 px-2 py-0.5 rounded inline-block">
-                          ID: {record.studentId}
-                        </div>
-                        <div className="text-xs text-slate-400 block pt-0.5">
-                          {record.studentClass}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Column 2: Diagnostic */}
-                    <td className="py-3.5 px-4 align-top">
-                      <div className="space-y-1.5">
-                        <div className="flex flex-wrap gap-1">
-                          <span className="text-[10px] font-semibold border px-1.5 py-0.5 rounded-md bg-teal-500/10 text-teal-300 border-teal-500/20">
-                            {WeaknessCategoryLabels[record.weaknessCategory]}
-                          </span>
-                          <span className={`text-[10px] font-semibold border px-1.5 py-0.5 rounded-md ${getLevelBadgeClass(record.weaknessLevel)}`}>
-                            {WeaknessLevelLabels[record.weaknessLevel]}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-300 leading-relaxed">
-                          <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">দুর্বলতার কারণ:</span>
-                          {record.rootCause}
-                        </p>
-                      </div>
-                    </td>
-
-                    {/* Column 3: Mind Mapping */}
-                    <td className="py-3.5 px-4 align-top">
-                      <div className="space-y-2">
-                        <div>
-                          <span className="text-[11px] font-semibold text-slate-400 block">শিখন শৈলী:</span>
-                          <span className={`text-[10px] font-semibold border px-1.5 py-0.5 rounded ${getStyleBadgeClass(record.learningStyle)}`}>
-                            {LearningStyleLabels[record.learningStyle]}
-                          </span>
-                        </div>
-                        <div className="text-xs text-slate-300">
-                          <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">আচরণগত বৈশিষ্ট্য:</span>
-                          {record.behavior}
-                        </div>
-                        {record.hiddenTalent && (
-                          <div className="text-xs text-teal-300">
-                            <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">বিশেষ প্রতিভা:</span>
-                            ✨ {record.hiddenTalent}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Column 4: Monitoring */}
-                    <td className="py-3.5 px-4 align-top">
-                      <div className="space-y-2">
-                        <div className="text-xs">
-                          <span className="font-semibold text-rose-300 block text-[11px] mb-0.5">প্রাথমিক সক্ষমতা (Baseline):</span>
-                          <span className="text-slate-300 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded block">
-                            {record.baselineStatus}
-                          </span>
-                        </div>
-                        <div className="text-xs">
-                          <span className="font-semibold text-emerald-300 block text-[11px] mb-0.5">বর্তমান সক্ষমতা (Current):</span>
-                          <span className="text-slate-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded block">
-                            {record.currentStatus}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-slate-400 block text-[11px] mb-1">প্রগতি ও প্রবৃদ্ধি সংকেত:</span>
-                          <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 border rounded-full bg-white/5 border-white/10 text-white`}>
-                            <span>{signal.emoji}</span>
-                            <span>{signal.label}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Column 5: Intervention & Remarks */}
-                    <td className="py-3.5 px-4 align-top">
-                      <div className="space-y-2 text-xs leading-relaxed">
-                        <div>
-                          <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">গৃহীত বিশেষ কৌশল:</span>
-                          <p className="text-slate-300 bg-slate-950/40 px-2 py-1 rounded border border-white/5">{record.strategyUsed}</p>
-                        </div>
-                        {record.teacherRemarks && (
-                          <div>
-                            <span className="font-semibold text-slate-400 block text-[11px] mb-0.5">শিক্ষকের মন্তব্য:</span>
-                            <p className="text-slate-400 italic">“{record.teacherRemarks}”</p>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Column 6: Actions */}
-                    <td className="py-3.5 px-4 align-middle text-center no-print">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => onEdit(record)}
-                          className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition cursor-pointer"
-                          title="তথ্য সংশোধন করুন"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`আপনি কি নিশ্চিতভাবে ${record.studentName}-এর তথ্য ডিলিট করতে চান?`)) {
-                              onDelete(record.id);
-                            }
-                          }}
-                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
-                          title="ডিলিট করুন"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredRecords.map((record) => (
+                <StudentTableRow 
+                  key={record.id}
+                  record={record}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onSelectMessage={setSelectedMessageRecord}
+                  getLevelBadgeClass={getLevelBadgeClass}
+                  getStyleBadgeClass={getStyleBadgeClass}
+                />
+              ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {selectedMessageRecord && (
+        <ParentMessageDraftModal
+          record={selectedMessageRecord}
+          onClose={() => setSelectedMessageRecord(null)}
+        />
+      )}
     </div>
   );
 }

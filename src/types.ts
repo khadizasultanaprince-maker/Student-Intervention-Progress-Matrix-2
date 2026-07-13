@@ -22,6 +22,7 @@ export interface StudentRecord {
   baselineStatus: string;
   currentStatus: string;
   progressSignal: ProgressSignal;
+  lastWeekProgressSignal?: ProgressSignal; // Last week's progress for comparison
   strategyUsed: string;
   teacherRemarks: string;
   createdAt: string; // Timestamp

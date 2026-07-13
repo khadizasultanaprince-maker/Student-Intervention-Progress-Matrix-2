@@ -49,10 +49,14 @@ export default function PrintReportView({
         <div className="space-y-1">
           <h3 className="font-bold text-white text-base flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-blue-400" />
-            <span>প্রাতিষ্ঠানিক প্রিন্ট প্রিভিউ (Landscape A4/Legal)</span>
+            <span>প্রাতিষ্ঠানিক প্রিন্ট ও পিডিএফ প্রিভিউ</span>
           </h3>
           <p className="text-xs text-slate-400">
-            নিচের ফিল্ডগুলো পরিবর্তন করে প্রতিবেদনের শিরোনাম কাস্টমাইজ করতে পারেন। এটি ল্যান্ডস্কেপ প্রিন্টিং-এর জন্য অপ্টিমাইজড।
+            এটি ল্যান্ডস্কেপ প্রিন্টিং ও অফলাইন পিডিএফ সংরক্ষণের জন্য বিশেষভাবে প্রস্তুতকৃত।
+          </p>
+          <p className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium bg-emerald-500/10 border border-emerald-500/20 rounded px-2 py-0.5 w-fit">
+            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
+            <span>ডাউনলোড টিপ: পিডিএফ ডাউনলোড করতে 'Save PDF' বাটনে ক্লিক করে প্রিন্টার ডেস্টিনেশন হিসেবে "Save as PDF" সিলেক্ট করুন।</span>
           </p>
         </div>
 
@@ -80,6 +84,14 @@ export default function PrintReportView({
           </div>
           
           <div className="flex items-center gap-2 pt-4 sm:pt-0">
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-lg shadow-emerald-600/25 cursor-pointer transition active:scale-95 animate-pulse hover:animate-none"
+              title="পিডিএফ হিসেবে ডাউনলোড করুন"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>পিডিএফ ডাউনলোড (Save PDF)</span>
+            </button>
             <button
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-lg shadow-blue-600/25 cursor-pointer transition active:scale-95"
