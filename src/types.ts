@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type WeaknessCategory = 'Reading' | 'Writing' | 'Math' | 'Comm' | 'Attention' | 'Memory';
+export type WeaknessCategory = 'Reading' | 'Writing' | 'Math' | 'Comm' | 'Attention' | 'Memory' | 'Behavior';
 export type WeaknessLevel = 'Mild' | 'Moderate' | 'Severe';
 export type LearningStyle = 'Visual' | 'Auditory' | 'Kinesthetic';
 export type ProgressSignal = 'Red' | 'Yellow' | 'Green';
@@ -74,6 +74,7 @@ export const WeaknessCategoryLabels: Record<WeaknessCategory, string> = {
   Comm: 'যোগাযোগ (Communication)',
   Attention: 'মনোযোগ (Attention)',
   Memory: 'স্মৃতিশক্তি (Memory)',
+  Behavior: 'ম্যানার বা আচরণ (Manners / Behavior)',
 };
 
 export const WeaknessLevelLabels: Record<WeaknessLevel, string> = {

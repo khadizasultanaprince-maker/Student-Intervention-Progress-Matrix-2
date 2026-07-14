@@ -11,8 +11,9 @@ import {
   LearningStyleLabels, 
   ProgressSignalLabels 
 } from '../types';
-import { Trash2, Edit, Search, Filter, RefreshCw, Layers, Mail, Sparkles, ChevronDown, ChevronUp, BookOpen, PenTool, UserCheck, Phone, Activity, Calendar, User, Users, Image } from 'lucide-react';
+import { Trash2, Edit, Search, Filter, RefreshCw, Layers, Mail, Sparkles, ChevronDown, ChevronUp, BookOpen, PenTool, UserCheck, Phone, Activity, Calendar, User, Users, Image, Brain } from 'lucide-react';
 import ParentMessageDraftModal from './ParentMessageDraftModal';
+import { PRELOADED_TEACHERS } from '../studentDatabase';
 
 interface StudentTableRowProps {
   key?: string;
@@ -521,6 +522,7 @@ export default function StudentTable({ records, onDelete, onEdit, onUpdateGoalSt
   const [signalFilter, setSignalFilter] = useState<string>('All');
   const [levelFilter, setLevelFilter] = useState<string>('All');
   const [styleFilter, setStyleFilter] = useState<string>('All');
+  const [teacherFilter, setTeacherFilter] = useState<string>('All');
 
 
   // Extract unique classes for filtering
@@ -537,8 +539,15 @@ export default function StudentTable({ records, onDelete, onEdit, onUpdateGoalSt
     const matchesSignal = signalFilter === 'All' || record.progressSignal === signalFilter;
     const matchesLevel = levelFilter === 'All' || record.weaknessLevel === levelFilter;
     const matchesStyle = styleFilter === 'All' || record.learningStyle === styleFilter;
+    const matchesTeacher = teacherFilter === 'All' || 
+      (record.reportingTeacher && (
+        record.reportingTeacher === teacherFilter || 
+        record.reportingTeacher.includes(teacherFilter) ||
+        // also check if the name without designation matches
+        (teacherFilter.split(' (')[0] && record.reportingTeacher.includes(teacherFilter.split(' (')[0]))
+      ));
 
-    return matchesSearch && matchesCategory && matchesClass && matchesSignal && matchesLevel && matchesStyle;
+    return matchesSearch && matchesCategory && matchesClass && matchesSignal && matchesLevel && matchesStyle && matchesTeacher;
   });
 
   const getLevelBadgeClass = (level: string) => {
@@ -567,7 +576,7 @@ export default function StudentTable({ records, onDelete, onEdit, onUpdateGoalSt
     }
   };
 
-  const hasActiveFilters = searchTerm || categoryFilter !== 'All' || classFilter !== 'All' || signalFilter !== 'All' || levelFilter !== 'All' || styleFilter !== 'All';
+  const hasActiveFilters = searchTerm || categoryFilter !== 'All' || classFilter !== 'All' || signalFilter !== 'All' || levelFilter !== 'All' || styleFilter !== 'All' || teacherFilter !== 'All';
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -576,6 +585,7 @@ export default function StudentTable({ records, onDelete, onEdit, onUpdateGoalSt
     setSignalFilter('All');
     setLevelFilter('All');
     setStyleFilter('All');
+    setTeacherFilter('All');
   };
 
   return (
@@ -625,8 +635,110 @@ export default function StudentTable({ records, onDelete, onEdit, onUpdateGoalSt
           )}
         </div>
 
+        {/* Quick Filter Ribbon Panel */}
+        <div className="bg-slate-950/20 border border-white/5 rounded-2xl p-4.5 space-y-4 no-print">
+          {/* 1. Class Quick Selector */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+              <span className="flex items-center gap-1.5 text-indigo-400">
+                <Users className="w-4 h-4" /> শ্রেণি অনুযায়ী দ্রুত বাছাই (Class Quick Filter)
+              </span>
+              <span className="text-[10px] text-indigo-300/80 font-mono bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/10">মোট {records.length} জন</span>
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+              <button
+                onClick={() => setClassFilter('All')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                  classFilter === 'All'
+                    ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/20 border border-indigo-400/30 scale-[1.02]'
+                    : 'bg-slate-950/40 hover:bg-slate-800/40 border border-white/5 text-slate-300 hover:text-white'
+                }`}
+              >
+                <span>সকল শ্রেণী (All)</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${classFilter === 'All' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                  {records.length}
+                </span>
+              </button>
+              {classes.map(cls => {
+                const count = records.filter(r => r.studentClass === cls).length;
+                return (
+                  <button
+                    key={cls}
+                    onClick={() => setClassFilter(cls)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                      classFilter === cls
+                        ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/20 border border-indigo-400/30 scale-[1.02]'
+                        : 'bg-slate-950/40 hover:bg-slate-800/40 border border-white/5 text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <span>{cls}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${classFilter === cls ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Subject/Category Quick Selector */}
+          <div className="space-y-2 pt-1.5 border-t border-white/5">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+              <span className="flex items-center gap-1.5 text-emerald-400">
+                <BookOpen className="w-4 h-4" /> বিষয় ও আচরণগত দুর্বলতা অনুযায়ী বাছাই (Subject & Behavior Areas)
+              </span>
+              <span className="text-[10px] text-emerald-300/80 font-mono bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/10">শ্রেণীকক্ষ পর্যবেক্ষণ</span>
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+              <button
+                onClick={() => setCategoryFilter('All')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                  categoryFilter === 'All'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/20 border border-emerald-400/30 scale-[1.02]'
+                    : 'bg-slate-950/40 hover:bg-slate-800/40 border border-white/5 text-slate-300 hover:text-white'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>সকল ক্ষেত্র (All Areas)</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${categoryFilter === 'All' ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                  {records.length}
+                </span>
+              </button>
+              {Object.entries(WeaknessCategoryLabels).map(([key, label]) => {
+                const count = records.filter(r => r.weaknessCategory === key).length;
+                let IconComponent = BookOpen;
+                if (key === 'Reading') IconComponent = BookOpen;
+                else if (key === 'Writing') IconComponent = PenTool;
+                else if (key === 'Math') IconComponent = Brain;
+                else if (key === 'Comm') IconComponent = Mail;
+                else if (key === 'Attention') IconComponent = Activity;
+                else if (key === 'Memory') IconComponent = RefreshCw;
+                else if (key === 'Behavior') IconComponent = UserCheck;
+
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setCategoryFilter(key)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                      categoryFilter === key
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/20 border border-emerald-400/30 scale-[1.02]'
+                        : 'bg-slate-950/40 hover:bg-slate-800/40 border border-white/5 text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    <IconComponent className="w-3.5 h-3.5 shrink-0" />
+                    <span>{label.split(' (')[0]}</span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${categoryFilter === key ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Filters Matrix Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-3.5 pt-2">
           {/* 1. Search Box */}
           <div className="space-y-1">
             <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
@@ -725,6 +837,25 @@ export default function StudentTable({ records, onDelete, onEdit, onUpdateGoalSt
               <option value="All" className="bg-slate-950 text-white">সকল শৈলী (All)</option>
               {Object.entries(LearningStyleLabels).map(([key, label]) => (
                 <option key={key} value={key} className="bg-slate-950 text-white">{label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 7. Teacher Filter */}
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+              <Filter className="w-3 h-3 text-blue-400" /> শিক্ষক ফিল্টার
+            </label>
+            <select
+              value={teacherFilter}
+              onChange={(e) => setTeacherFilter(e.target.value)}
+              className="w-full text-xs py-2 pl-2 pr-6 rounded-xl border border-white/15 bg-slate-950/40 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/80"
+            >
+              <option value="All" className="bg-slate-950 text-white">সকল শিক্ষক (All)</option>
+              {PRELOADED_TEACHERS.map(t => (
+                <option key={t.serial} value={`${t.name} (${t.designation})`} className="bg-slate-950 text-white">
+                  {t.name} ({t.designation})
+                </option>
               ))}
             </select>
           </div>

@@ -16,7 +16,7 @@ import {
   ProgressSignalLabels
 } from '../types';
 import { User, ShieldAlert, Brain, FileSpreadsheet, Send, RefreshCw, X, Target, Sparkles, Phone, UserCheck, BookOpen, PenTool, HelpCircle, Activity, Calendar, Image, Users, Upload } from 'lucide-react';
-import { PRELOADED_STUDENTS, getPlaceholderAvatar } from '../studentDatabase';
+import { PRELOADED_STUDENTS, PRELOADED_TEACHERS, getPlaceholderAvatar } from '../studentDatabase';
 
 interface StudentFormProps {
   onSubmit: (record: Omit<StudentRecord, 'id' | 'createdAt'> & { id?: string }) => void;
@@ -1058,15 +1058,43 @@ export default function StudentForm({ onSubmit, editingRecord, onCancelEdit }: S
                 <UserCheck className="w-3.5 h-3.5 text-blue-400" />
                 তথ্য প্রদানকারী শিক্ষকের নাম <span className="text-red-400">*</span>
               </label>
-              <input
-                type="text"
-                id="reportingTeacher"
-                name="reportingTeacher"
-                value={formData.reportingTeacher}
-                onChange={handleChange}
-                placeholder="যেমন: জনাব আশরাফুল হক"
-                className={`w-full text-sm px-3.5 py-2.5 rounded-lg border focus:ring-2 focus:outline-none transition ${errors.reportingTeacher ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-slate-900/60 text-white' : 'border-white/15 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-900/50 text-white'}`}
-              />
+              <div className="space-y-2">
+                <select
+                  value={PRELOADED_TEACHERS.some(t => `${t.name} (${t.designation})` === formData.reportingTeacher || t.name === formData.reportingTeacher) 
+                    ? (PRELOADED_TEACHERS.find(t => t.name === formData.reportingTeacher) 
+                        ? `${PRELOADED_TEACHERS.find(t => t.name === formData.reportingTeacher)?.name} (${PRELOADED_TEACHERS.find(t => t.name === formData.reportingTeacher)?.designation})`
+                        : formData.reportingTeacher)
+                    : (formData.reportingTeacher ? "custom" : "")}
+                  onChange={(e) => {
+                    if (e.target.value === "custom") {
+                      setFormData(prev => ({ ...prev, reportingTeacher: "নতুন শিক্ষক" }));
+                    } else {
+                      setFormData(prev => ({ ...prev, reportingTeacher: e.target.value }));
+                    }
+                  }}
+                  className={`w-full text-sm px-3.5 py-2.5 rounded-lg border focus:ring-2 focus:outline-none transition ${errors.reportingTeacher ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500 bg-slate-900/60 text-white' : 'border-white/15 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-900/50 text-white'}`}
+                >
+                  <option value="">-- শিক্ষক নির্বাচন করুন --</option>
+                  {PRELOADED_TEACHERS.map(t => (
+                    <option key={t.serial} value={`${t.name} (${t.designation})`}>
+                      {t.name} ({t.designation})
+                    </option>
+                  ))}
+                  <option value="custom">✎ নতুন নাম লিখুন... (Type custom name)</option>
+                </select>
+
+                {(!PRELOADED_TEACHERS.some(t => `${t.name} (${t.designation})` === formData.reportingTeacher || t.name === formData.reportingTeacher) && formData.reportingTeacher !== "") && (
+                  <input
+                    type="text"
+                    id="reportingTeacher"
+                    name="reportingTeacher"
+                    value={formData.reportingTeacher === "নতুন শিক্ষক" ? "" : formData.reportingTeacher}
+                    onChange={handleChange}
+                    placeholder="যেমন: জনাব আশরাফুল হক"
+                    className="w-full text-sm px-3.5 py-2 rounded-lg border border-indigo-500/30 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-950 text-white focus:outline-none transition"
+                  />
+                )}
+              </div>
               {errors.reportingTeacher && <p className="text-red-400 text-xs mt-1">{errors.reportingTeacher}</p>}
             </div>
 

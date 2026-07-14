@@ -13,8 +13,10 @@ import {
   ShieldAlert,
   Megaphone,
   Check,
-  RotateCcw
+  RotateCcw,
+  Users
 } from 'lucide-react';
+import { PRELOADED_TEACHERS } from '../studentDatabase';
 
 interface TeacherQuickPanelProps {
   records: StudentRecord[];
@@ -23,7 +25,7 @@ interface TeacherQuickPanelProps {
 export default function TeacherQuickPanel({ records }: TeacherQuickPanelProps) {
   // State for signed student IDs, stored in localStorage for persistence
   const [signedIds, setSignedIds] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'signatures' | 'urgent'>('signatures');
+  const [activeTab, setActiveTab] = useState<'signatures' | 'urgent' | 'teachers'>('signatures');
   const [signatureDate, setSignatureDate] = useState<string>(
     new Date().toLocaleDateString('bn-BD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   );
@@ -110,17 +112,17 @@ export default function TeacherQuickPanel({ records }: TeacherQuickPanelProps) {
       </div>
 
       {/* Tabs Selector Row */}
-      <div className="flex border-b border-white/5 bg-slate-950/40 p-2 gap-2">
+      <div className="flex border-b border-white/5 bg-slate-950/40 p-2 gap-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('signatures')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === 'signatures'
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15 border border-indigo-500/30'
               : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
           }`}
         >
           <PenTool className="w-4 h-4" />
-          <span>পেন্ডিং সিগনেচার ও অনুমোদন ({pendingRecords.length})</span>
+          <span>পেন্ডিং সিগনেচার ({pendingRecords.length})</span>
           {pendingRecords.length > 0 && (
             <span className="px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black animate-pulse">
               {pendingRecords.length}
@@ -130,25 +132,37 @@ export default function TeacherQuickPanel({ records }: TeacherQuickPanelProps) {
 
         <button
           onClick={() => setActiveTab('urgent')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
             activeTab === 'urgent'
               ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/15 border border-rose-500/30'
               : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
           }`}
         >
           <ShieldAlert className="w-4 h-4" />
-          <span>জরুরি হস্তক্ষেপ প্রয়োজন ({urgentRecords.length})</span>
+          <span>জরুরি হস্তক্ষেপ ({urgentRecords.length})</span>
           {urgentRecords.length > 0 && (
             <span className="px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-black">
               {urgentRecords.length}
             </span>
           )}
         </button>
+
+        <button
+          onClick={() => setActiveTab('teachers')}
+          className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            activeTab === 'teachers'
+              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/15 border border-emerald-500/30'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>আমাদের শিক্ষকবৃন্দ (১১)</span>
+        </button>
       </div>
 
       {/* Content Space */}
       <div className="p-5">
-        {records.length === 0 ? (
+        {records.length === 0 && activeTab !== 'teachers' ? (
           <div className="text-center py-8">
             <p className="text-slate-400 text-xs italic">কোনো শিক্ষার্থীর রেকর্ড সংরক্ষিত নেই। প্রথমে শিক্ষার্থী তালিকা যোগ করুন।</p>
           </div>
@@ -238,7 +252,7 @@ export default function TeacherQuickPanel({ records }: TeacherQuickPanelProps) {
             )}
 
           </div>
-        ) : (
+        ) : activeTab === 'urgent' ? (
           /* URGENT INTERVENTIONS VIEW */
           <div className="space-y-4">
             
@@ -300,6 +314,30 @@ export default function TeacherQuickPanel({ records }: TeacherQuickPanelProps) {
               </div>
             )}
 
+          </div>
+        ) : (
+          /* TEACHERS LIST VIEW */
+          <div className="space-y-4">
+            <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-xl p-3 text-emerald-300 text-xs flex items-center gap-2.5">
+              <Users className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span>
+                <strong>ডি-লিকন মডেল একাডেমী শিক্ষক প্যানেল:</strong> আমাদের প্রতিষ্ঠানের সকল সম্মানিত শিক্ষক ও সহকারীগণের তালিকা নিচে প্রদর্শিত হলো। এটি যেকোনো ফরমে বা শিক্ষক নির্বাচনে স্বয়ংক্রিয়ভাবে ব্যবহার করা যাবে।
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {PRELOADED_TEACHERS.map(teacher => (
+                <div key={teacher.serial} className="bg-slate-950/40 border border-white/5 rounded-xl p-3.5 flex items-center gap-3 hover:border-emerald-500/30 transition-all">
+                  <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-xs shrink-0">
+                    {teacher.serial}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-slate-100 truncate">{teacher.name}</h4>
+                    <p className="text-[10px] text-slate-400 truncate">{teacher.designation}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

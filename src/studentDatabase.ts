@@ -215,6 +215,26 @@ export const PRELOADED_STUDENTS: Record<string, PreloadedStudent[]> = {
 };
 
 // Generates high quality placeholder photos for boy/girl
+export interface PreloadedTeacher {
+  serial: string;
+  name: string;
+  designation: string;
+}
+
+export const PRELOADED_TEACHERS: PreloadedTeacher[] = [
+  { serial: '১', name: 'মিতু আক্তার', designation: 'প্রিন্সিপাল' },
+  { serial: '২', name: 'মোখলেস', designation: 'আরবী শিক্ষক' },
+  { serial: '৩', name: 'মাহবুব এলাহী প্রিন্স', designation: 'আইসিটি শিক্ষক' },
+  { serial: '৪', name: 'সজীব', designation: 'সহকারী' },
+  { serial: '৫', name: 'মাজহারুল', designation: 'সহকারী' },
+  { serial: '৬', name: 'সালমা', designation: 'সহকারী' },
+  { serial: '৭', name: 'মিতা', designation: 'সহকারী' },
+  { serial: '৮', name: 'নাসরিন', designation: 'সহকারী' },
+  { serial: '৯', name: 'মনির', designation: 'সহকারী' },
+  { serial: '১০', name: 'শাহনাজ', designation: 'সহকারী' },
+  { serial: '১১', name: 'শান্তা', designation: 'সহকারী' },
+];
+
 export function getPlaceholderAvatar(gender: 'boy' | 'girl', roll: string): string {
   const seed = parseInt(roll) || 1;
   if (gender === 'boy') {

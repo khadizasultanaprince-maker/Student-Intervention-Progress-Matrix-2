@@ -61,7 +61,7 @@ export default function App() {
   };
   
   // States for custom print header settings (propagates to PrintReportView)
-  const [schoolName, setSchoolName] = useState('সরকারি প্রাথমিক/মাধ্যমিক বিদ্যালয় প্রগতি বিবরণী');
+  const [schoolName, setSchoolName] = useState('ডি-লিকন মডেল একাডেমী');
   const [academicYear, setAcademicYear] = useState('২০২৬');
 
   // Load initial data from localStorage or fallback to sampleData
@@ -514,9 +514,73 @@ export default function App() {
       <div className="print-only" id="direct-print-layout">
         {/* Institutional Header */}
         <div className="text-center space-y-1.5 border-b-2 border-double border-slate-800 pb-4 mb-5">
-          <div className="mx-auto w-10 h-10 rounded-full border-2 border-slate-800 flex items-center justify-center font-bold text-slate-800 text-[10px] mb-1 bg-slate-50">
-            সরকারি লোগো
-          </div>
+          {/* D-Likon Model Academy Logo SVG */}
+          <svg className="mx-auto w-24 h-24 mb-2" viewBox="0 0 200 200">
+            <defs>
+              <path id="direct-top-curve" d="M 30,100 A 70,70 0 0,1 170,100" fill="none" />
+              <path id="direct-bottom-curve" d="M 170,100 A 70,70 0 0,1 30,100" fill="none" />
+            </defs>
+
+            {/* Outer Laurel / Decorative circles */}
+            <circle cx="100" cy="100" r="92" fill="none" stroke="#6366f1" strokeWidth="2" strokeDasharray="3 3" />
+            <circle cx="100" cy="100" r="88" fill="none" stroke="#7c3aed" strokeWidth="1.5" />
+            <circle cx="100" cy="100" r="84" fill="none" stroke="#10b981" strokeWidth="2" />
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#f59e0b" strokeWidth="1.5" />
+
+            {/* Inner solid background */}
+            <circle cx="100" cy="100" r="76" fill="#f8fafc" stroke="#334155" strokeWidth="1" />
+
+            {/* Sun Rays & Sun in the center */}
+            <g transform="translate(100, 75)">
+              <path d="M -15,0 A 15,15 0 0,1 15,0 Z" fill="#f97316" />
+              <line x1="0" y1="-1" x2="0" y2="-12" stroke="#f97316" strokeWidth="2" />
+              <line x1="-8" y1="-4" x2="-16" y2="-10" stroke="#f97316" strokeWidth="1.5" />
+              <line x1="8" y1="-4" x2="16" y2="-10" stroke="#f97316" strokeWidth="1.5" />
+              <line x1="-12" y1="2" x2="-22" y2="-2" stroke="#f97316" strokeWidth="1.5" />
+              <line x1="12" y1="2" x2="22" y2="-2" stroke="#f97316" strokeWidth="1.5" />
+            </g>
+
+            {/* Open Book in the center */}
+            <g transform="translate(100, 92)">
+              <path d="M 0,10 C -12,4 -22,4 -28,8 L -28,-12 C -22,-16 -12,-16 0,-10 Z" fill="#ffffff" stroke="#1e3a8a" strokeWidth="2" />
+              <path d="M 0,10 C 12,4 22,4 28,8 L 28,-12 C 22,-16 12,-16 0,-10 Z" fill="#ffffff" stroke="#1e3a8a" strokeWidth="2" />
+              <line x1="0" y1="-10" x2="0" y2="12" stroke="#1e3a8a" strokeWidth="2.5" />
+              
+              <text x="-14" y="-2" fontFamily="sans-serif" fontSize="8" fontWeight="bold" fill="#1e3a8a" textAnchor="middle">D</text>
+              <text x="-14" y="6" fontFamily="sans-serif" fontSize="8" fontWeight="bold" fill="#1e3a8a" textAnchor="middle">M</text>
+              <text x="14" y="-2" fontFamily="sans-serif" fontSize="8" fontWeight="bold" fill="#1e3a8a" textAnchor="middle">L</text>
+              <text x="14" y="6" fontFamily="sans-serif" fontSize="8" fontWeight="bold" fill="#1e3a8a" textAnchor="middle">A</text>
+            </g>
+
+            {/* Top curved text: ডি-লিকন মডেল একাডেমী */}
+            <text fontStyle="normal" fontWeight="bold" fontSize="10" fill="#dc2626">
+              <textPath href="#direct-top-curve" startOffset="50%" textAnchor="middle">
+                ডি-লিকন মডেল একাডেমী
+              </textPath>
+            </text>
+
+            {/* Established text */}
+            <text x="100" y="124" fontFamily="sans-serif" fontSize="8" fontWeight="bold" fill="#4c1d95" textAnchor="middle">
+              স্থাপিত: ২০১৮ ইং
+            </text>
+
+            {/* Bottom curved text: গেঁড়ী মার্কেট, সনমানিয়া, কাপাসিয়া */}
+            <text fontStyle="normal" fontWeight="bold" fontSize="7" fill="#047857">
+              <textPath href="#direct-bottom-curve" startOffset="50%" textAnchor="middle">
+                গেঁড়ী মার্কেট, সনমানিয়া, কাপাসিয়া, গাজীপুর
+              </textPath>
+            </text>
+
+            {/* Bottom Banner Ribbon */}
+            <g transform="translate(100, 160)">
+              <path d="M -65,-8 L 65,-8 L 60,8 L -60,8 Z" fill="#7c3aed" />
+              <path d="M -65,-8 L -60,8 L -75,12 L -70,-2 Z" fill="#5b21b6" />
+              <path d="M 65,-8 L 60,8 L 75,12 L 70,-2 Z" fill="#5b21b6" />
+              <text x="0" y="3" fontFamily="Georgia, serif" fontSize="8" fontWeight="bold" fill="#ffffff" textAnchor="middle">
+                D-Likon Model Academy
+              </text>
+            </g>
+          </svg>
           <h1 className="text-lg font-black text-slate-900 tracking-tight">
             {schoolName || 'সরকারি প্রাথমিক/মাধ্যমিক বিদ্যালয় প্রগতি বিবরণী'}
           </h1>
